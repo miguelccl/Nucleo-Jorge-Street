@@ -26,8 +26,6 @@
     
     <!-- Ícones e Bibliotecas -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -111,7 +109,7 @@
         <!-- Status de Conexão -->
         <div class="px-4 py-2 bg-gray-50 dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-darkborder flex items-center gap-2 text-xs">
             <span id="conn-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <span id="conn-status" class="text-gray-500 dark:text-gray-400 font-medium">Conectando...</span>
+            <span id="conn-status" class="text-gray-500 dark:text-gray-400 font-medium">Conectando Nuvem...</span>
         </div>
         
         <nav class="flex-1 p-3 space-y-2 overflow-y-auto">
@@ -126,8 +124,8 @@
             </button>
         </nav>
 
-        <div class="p-4 border-t border-gray-100 dark:border-darkborder text-xs text-center text-gray-400">
-            SysPessoas v2.0 &copy; 2026
+        <div class="p-4 border-t border-gray-100 dark:border-darkborder text-xs text-center text-gray-400" id="user-display">
+            Sincronizando...
         </div>
     </aside>
 
@@ -280,118 +278,124 @@
         </div>
     </main>
 
-    <script>
-        // --- CONFIGURAÇÃO DO FIREBASE (Com detecção inteligente) ---
-        const firebaseConfig = {
-            apiKey: "SUA_API_KEY",
-            authDomain: "SUA_URL.firebaseapp.com",
-            projectId: "SEU_ID",
-            storageBucket: "...",
-            messagingSenderId: "...",
-            appId: "..."
-        };
+    <!-- Script de Inicialização da Conexão em Nuvem e Lógica do App -->
+    <script type="module">
+        // Importações da biblioteca Firestore do Firebase oficial na versão v11
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let db = null;
-        let isFirebaseActive = false;
+        // Configuração injetada do ambiente ou fallback seguro
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "",
+                authDomain: "syspessoas-demo.firebaseapp.com",
+                projectId: "syspessoas-demo",
+                storageBucket: "syspessoas-demo.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456789:web:abcdef"
+            };
 
-        // Estado local sincronizado (Backup para LocalStorage se Firebase estiver ausente)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'syspessoas-global-app';
+
+        // Estado do app sincronizado em tempo real
         let state = {
             participantes: [],
             turmas: []
         };
 
-        // --- SISTEMA DE ARMAZENAMENTO MISTO (FIREBASE / LOCAL STORAGE) ---
-        function detectDatabaseMode() {
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        // Referências das coleções usando caminhos estritos obrigatórios para multi-dispositivo global
+        const getTurmasCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'turmas');
+        const getParticipantesCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'participantes');
+
+        // Inicialização do Banco de Dados em Nuvem (Regra 3 - Autenticar antes de ler/gravar)
+        async function initSyncEngine() {
             const connIndicator = document.getElementById('conn-indicator');
             const connStatus = document.getElementById('conn-status');
+            const userDisplay = document.getElementById('user-display');
 
-            if (firebaseConfig.apiKey === "SUA_API_KEY" || firebaseConfig.projectId === "SEU_ID" || !firebaseConfig.apiKey) {
-                // Modo LocalStorage Ativo
-                isFirebaseActive = false;
-                connIndicator.className = "w-2.5 h-2.5 rounded-full bg-blue-500";
-                connStatus.textContent = "Modo Local (Offline)";
-                loadLocalData();
-                render();
-            } else {
-                // Tenta conectar no Firebase
-                try {
-                    firebase.initializeApp(firebaseConfig);
-                    db = firebase.firestore();
-                    isFirebaseActive = true;
-                    connIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
-                    connStatus.textContent = "Firebase Online";
-                    
-                    // Escuta alterações em tempo real via Firestore
-                    listenFirestore();
-                } catch (error) {
-                    console.error("Erro ao iniciar Firebase, usando fallback offline:", error);
-                    isFirebaseActive = false;
-                    connIndicator.className = "w-2.5 h-2.5 rounded-full bg-red-500";
-                    connStatus.textContent = "Erro Firebase (Modo Local)";
-                    loadLocalData();
-                    render();
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Autenticação prévia obrigatória
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
                 }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = user;
+                        connIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                        connStatus.textContent = "Nuvem Sincronizada";
+                        userDisplay.innerHTML = `<span class="block overflow-hidden text-ellipsis whitespace-nowrap">ID: ${user.uid}</span>`;
+                        
+                        // Sincronizar em tempo real as coleções compartilhadas globalmente
+                        startRealtimeSync();
+                    } else {
+                        connIndicator.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+                        connStatus.textContent = "Sem autenticação";
+                    }
+                });
+
+            } catch (err) {
+                console.error("Falha ao inicializar o banco de dados:", err);
+                connIndicator.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                connStatus.textContent = "Modo Demonstração";
+                userDisplay.textContent = "Erro de sincronização";
+                
+                // Dados iniciais de demonstração em caso de erro de inicialização local
+                state.turmas = [
+                    { id: "t1", nome: "INFORMÁTICA - 1º ANO" },
+                    { id: "t2", nome: "ADMINISTRAÇÃO - 2º ANO" }
+                ];
+                state.participantes = [
+                    { id: "p1", nome: "Visitante Demo", funcao: "Aluno", presencas: 5, turma_id: "t1" }
+                ];
+                render();
             }
         }
 
-        // Carrega dados offline salvos no LocalStorage
-        function loadLocalData() {
-            const storedParticipantes = localStorage.getItem('sys_participantes');
-            const storedTurmas = localStorage.getItem('sys_turmas');
-            
-            state.participantes = storedParticipantes ? JSON.parse(storedParticipantes) : getMockData().participantes;
-            state.turmas = storedTurmas ? JSON.parse(storedTurmas) : getMockData().turmas;
-            
-            // Salva os dados iniciais padrão se o storage estiver vazio
-            if (!storedParticipantes || !storedTurmas) {
-                saveToLocalStorage();
-            }
-        }
+        // Sincronização em tempo real multi-dispositivo de forma reativa (Regra 2 - Sem buscas complexas)
+        function startRealtimeSync() {
+            if (!currentUser) return;
 
-        // Salva dados no LocalStorage
-        function saveToLocalStorage() {
-            localStorage.setItem('sys_participantes', JSON.stringify(state.participantes));
-            localStorage.setItem('sys_turmas', JSON.stringify(state.turmas));
-        }
-
-        // Escuta o Firestore e sincroniza com o state
-        function listenFirestore() {
-            db.collection("turmas").onSnapshot((snap) => {
+            // Escuta modificações de qualquer dispositivo na coleção de Turmas
+            onSnapshot(getTurmasCol(), (snap) => {
                 state.turmas = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 render();
             }, (err) => {
-                showToast("Erro ao sincronizar turmas no Firebase.", "error");
+                console.error("Erro na sincronização de turmas:", err);
+                showToast("Erro de leitura das turmas.", "error");
             });
 
-            db.collection("participantes").onSnapshot((snap) => {
+            // Escuta modificações de qualquer dispositivo na coleção de Participantes
+            onSnapshot(getParticipantesCol(), (snap) => {
                 state.participantes = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 render();
             }, (err) => {
-                showToast("Erro ao sincronizar participantes no Firebase.", "error");
+                console.error("Erro na sincronização de participantes:", err);
+                showToast("Erro de leitura dos participantes.", "error");
             });
         }
 
-        // --- DADOS DE EXEMPLO (Caso não possua Firebase configurado de início) ---
-        function getMockData() {
-            const turmas = [
-                { id: "t1", nome: "INFORMÁTICA - 1º ANO" },
-                { id: "t2", nome: "ADMINISTRAÇÃO - 2º ANO" },
-                { id: "t3", nome: "EDIFICAÇÕES - 3º ANO" }
-            ];
-            const participantes = [
-                { id: "p1", nome: "Ana Beatriz Silva", funcao: "Aluna", presencas: 12, turma_id: "t1" },
-                { id: "p2", nome: "Carlos Eduardo Souza", funcao: "Líder de Classe", presencas: 15, turma_id: "t1" },
-                { id: "p3", nome: "Mariana Costa", funcao: "Aluna", presencas: 8, turma_id: "t2" },
-                { id: "p4", nome: "João Pedro Pereira", funcao: "Monitor", presencas: 19, turma_id: "t3" },
-                { id: "p5", nome: "Fernanda Lima", funcao: "Aluna", presencas: 5, turma_id: "t2" }
-            ];
-            return { turmas, participantes };
-        }
+        // --- SISTEMA DE OPERAÇÕES DE ESCRITA E EDICÃO (CRUD) ---
 
-        // --- FUNÇÕES DE CRUD (Salvar, Editar, Deletar) ---
-
-        // Salvar ou Editar Participante
+        // Salvar ou Atualizar Participante
         async function saveParticipante() {
+            if (!currentUser) {
+                showToast("Aguarde a autenticação do dispositivo...", "error");
+                return;
+            }
+
             const id = document.getElementById('part-id').value;
             const nomeInput = document.getElementById('part-nome').value.trim();
             const funcaoInput = document.getElementById('part-funcao').value.trim() || 'Participante';
@@ -404,7 +408,7 @@
             }
 
             if (!turmaSelect) {
-                showToast("Por favor, selecione ou cadastre uma turma primeiro!", "error");
+                showToast("Por favor, selecione uma turma!", "error");
                 return;
             }
 
@@ -415,36 +419,20 @@
                 turma_id: turmaSelect
             };
 
-            if (isFirebaseActive) {
-                try {
-                    if (id) {
-                        await db.collection("participantes").doc(id).update(data);
-                        showToast("Participante atualizado no Firebase!");
-                    } else {
-                        await db.collection("participantes").add(data);
-                        showToast("Participante cadastrado no Firebase!");
-                    }
-                } catch (err) {
-                    showToast("Erro ao salvar no Firebase.", "error");
-                }
-            } else {
-                // Fluxo Local
+            try {
                 if (id) {
-                    const idx = state.participantes.findIndex(p => p.id === id);
-                    if (idx !== -1) {
-                        state.participantes[idx] = { id, ...data };
-                        showToast("Participante atualizado localmente!");
-                    }
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'participantes', id);
+                    await updateDoc(docRef, data);
+                    showToast("Participante atualizado em todos os dispositivos!");
                 } else {
-                    const novoId = "p_" + Date.now();
-                    state.participantes.push({ id: novoId, ...data });
-                    showToast("Participante adicionado localmente!");
+                    await addDoc(getParticipantesCol(), data);
+                    showToast("Participante adicionado com sucesso!");
                 }
-                saveToLocalStorage();
-                render();
+                closeModal('modal-participante');
+            } catch (err) {
+                console.error("Erro de escrita:", err);
+                showToast("Erro ao gravar dados na nuvem.", "error");
             }
-
-            closeModal('modal-participante');
         }
 
         // Deletar Participante
@@ -455,62 +443,50 @@
             deleteTargetId = id;
             deleteTargetType = 'participante';
             const p = state.participantes.find(item => item.id === id);
-            openConfirmModal("Excluir Participante", `Tem certeza que deseja excluir "${p?.nome || 'este participante'}"? Esta ação não pode ser desfeita.`);
+            openConfirmModal("Excluir Participante", `Tem certeza que deseja excluir "${p?.nome || 'este participante'}" de todos os dispositivos?`);
         }
 
         async function executeDeleteParticipante(id) {
-            if (isFirebaseActive) {
-                try {
-                    await db.collection("participantes").doc(id).delete();
-                    showToast("Participante removido do Firebase!");
-                } catch (err) {
-                    showToast("Erro ao excluir do Firebase.", "error");
-                }
-            } else {
-                state.participantes = state.participantes.filter(p => p.id !== id);
-                saveToLocalStorage();
-                showToast("Participante removido localmente!");
-                render();
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'participantes', id);
+                await deleteDoc(docRef);
+                showToast("Participante excluído com sucesso!");
+            } catch (err) {
+                showToast("Erro ao excluir participante.", "error");
             }
         }
 
-        // Salvar Turma Rápido
+        // Salvar Nova Turma
         async function quickSaveTurma() {
+            if (!currentUser) {
+                showToast("Aguarde a autenticação...", "error");
+                return;
+            }
+
             const curso = document.getElementById('quick-turma-curso').value.trim().toUpperCase();
             const ano = document.getElementById('quick-turma-ano').value;
             
             if (!curso) {
-                showToast("Digite o nome do curso para cadastrar a turma!", "error");
+                showToast("Digite o nome do curso!", "error");
                 return;
             }
 
             const nomeTurma = ano === "Outro" ? curso : `${curso} - ${ano}º ANO`;
 
-            // Evitar duplicações simples
+            // Validação de Duplicados local antes do upload
             const existe = state.turmas.some(t => t.nome.toUpperCase() === nomeTurma.toUpperCase());
             if (existe) {
-                showToast("Essa turma já está cadastrada!", "error");
+                showToast("Essa turma já existe!", "error");
                 return;
             }
 
-            const data = { nome: nomeTurma };
-
-            if (isFirebaseActive) {
-                try {
-                    await db.collection("turmas").add(data);
-                    showToast("Turma cadastrada no Firebase!");
-                } catch (err) {
-                    showToast("Erro ao criar turma no Firebase.", "error");
-                }
-            } else {
-                const novoId = "t_" + Date.now();
-                state.turmas.push({ id: novoId, ...data });
-                saveToLocalStorage();
-                showToast("Turma criada localmente!");
-                render();
+            try {
+                await addDoc(getTurmasCol(), { nome: nomeTurma });
+                showToast("Turma adicionada com sucesso!");
+                document.getElementById('quick-turma-curso').value = '';
+            } catch (err) {
+                showToast("Erro ao adicionar turma na nuvem.", "error");
             }
-
-            document.getElementById('quick-turma-curso').value = '';
         }
 
         // Deletar Turma
@@ -520,52 +496,36 @@
             const t = state.turmas.find(item => item.id === id);
             const vinculados = state.participantes.filter(p => p.turma_id === id).length;
             
-            let aviso = `Tem certeza que deseja remover a turma "${t?.nome}"?`;
+            let aviso = `Excluir turma "${t?.nome}"?`;
             if (vinculados > 0) {
-                aviso += ` Existem ${vinculados} participantes vinculados a ela que ficarão desassociados.`;
+                aviso += ` Existem ${vinculados} participantes vinculados a ela que ficarão sem turma.`;
             }
 
             openConfirmModal("Excluir Turma", aviso);
         }
 
         async function executeDeleteTurma(id) {
-            if (isFirebaseActive) {
-                try {
-                    await db.collection("turmas").doc(id).delete();
-                    showToast("Turma excluída do Firebase!");
-                } catch (err) {
-                    showToast("Erro ao excluir turma do Firebase.", "error");
-                }
-            } else {
-                state.turmas = state.turmas.filter(t => t.id !== id);
-                // Opcional: Atualizar participantes órfãos
-                state.participantes = state.participantes.map(p => {
-                    if (p.turma_id === id) return { ...p, turma_id: "" };
-                    return p;
-                });
-                saveToLocalStorage();
-                showToast("Turma removida localmente!");
-                render();
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'turmas', id);
+                await deleteDoc(docRef);
+                showToast("Turma excluída com sucesso!");
+            } catch (err) {
+                showToast("Erro ao excluir turma.", "error");
             }
         }
 
-        // Adicionar / Remover presenças com um clique rápido (+/-)
+        // Modificador rápido de presenças (+ / -)
         async function updatePresencaRapida(id, alteracao) {
             const p = state.participantes.find(item => item.id === id);
             if (!p) return;
             
             const novaPresenca = Math.max(0, p.presencas + alteracao);
 
-            if (isFirebaseActive) {
-                try {
-                    await db.collection("participantes").doc(id).update({ presencas: novaPresenca });
-                } catch (e) {
-                    showToast("Erro ao alterar presenças.", "error");
-                }
-            } else {
-                p.presencas = novaPresenca;
-                saveToLocalStorage();
-                render();
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'participantes', id);
+                await updateDoc(docRef, { presencas: novaPresenca });
+            } catch (e) {
+                showToast("Erro ao computar presença.", "error");
             }
         }
 
@@ -574,7 +534,7 @@
         let chartPresencas = null;
 
         function render() {
-            // 1. Atualizar cards numéricos de estatísticas
+            // 1. Estatísticas Rápidas
             const totalParticipantes = state.participantes.length;
             const totalPresencas = state.participantes.reduce((acc, p) => acc + (p.presencas || 0), 0);
             
@@ -582,17 +542,17 @@
             document.getElementById('stat-presencas').textContent = totalPresencas;
             document.getElementById('stat-turmas').textContent = state.turmas.length;
 
-            // 2. Renderizar Select de Turma no Modal de Participante
+            // 2. Select do modal de participante
             const selectPartTurma = document.getElementById('part-turma');
             selectPartTurma.innerHTML = state.turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
             if (state.turmas.length === 0) {
                 selectPartTurma.innerHTML = `<option value="">Nenhuma Turma Cadastrada</option>`;
             }
 
-            // 3. Renderizar Lista de Participantes
+            // 3. Grid de Participantes
             renderParticipantes(state.participantes);
 
-            // 4. Renderizar Grade de Turmas
+            // 4. Grid de Turmas
             const gridTurmas = document.getElementById('grid-turmas');
             gridTurmas.innerHTML = state.turmas.map(t => {
                 const totalMembros = state.participantes.filter(p => p.turma_id === t.id).length;
@@ -619,16 +579,15 @@
                 gridTurmas.innerHTML = `
                     <div class="col-span-full text-center py-12 text-gray-400">
                         <i class="ph ph-folder-open text-6xl mb-2"></i>
-                        <p class="text-lg">Nenhuma turma adicionada. Use o painel acima para criar.</p>
+                        <p class="text-lg">Nenhuma turma criada até o momento.</p>
                     </div>
                 `;
             }
 
-            // 5. Renderizar Gráficos atualizados
+            // 5. Atualizar Gráficos do Dashboard
             renderCharts();
         }
 
-        // Renderiza lista de participantes filtrada
         function renderParticipantes(lista) {
             const container = document.getElementById('lista-participantes');
             const noParticipants = document.getElementById('no-participants');
@@ -643,7 +602,7 @@
             container.innerHTML = lista.map(p => {
                 const turma = state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma';
                 return `
-                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
                         <div>
                             <div class="flex justify-between items-start">
                                 <div>
@@ -678,13 +637,12 @@
             }).join('');
         }
 
-        // Renderiza e atualiza os gráficos do Dashboard
         function renderCharts() {
             const isDark = document.documentElement.classList.contains('dark');
             const textColor = isDark ? '#9ca3af' : '#4b5563';
             const gridColor = isDark ? '#2d2d2d' : '#f1f5f9';
 
-            // Dados para o Gráfico 1: Participantes por turma (%)
+            // Dados das Turmas para Porcentagem
             const total = state.participantes.length;
             const labelsTurma = state.turmas.map(t => t.nome);
             const dadosPorcentagem = state.turmas.map(t => {
@@ -692,18 +650,16 @@
                 return total > 0 ? parseFloat(((qtd / total) * 100).toFixed(1)) : 0;
             });
 
-            // Dados para o Gráfico 2: Presenças Acumuladas por Turma
+            // Dados das Presenças
             const dadosPresencas = state.turmas.map(t => {
                 return state.participantes
                     .filter(p => p.turma_id === t.id)
                     .reduce((acc, p) => acc + (p.presencas || 0), 0);
             });
 
-            // Destruir gráficos anteriores para não bugar
             if (chartTurmas) chartTurmas.destroy();
             if (chartPresencas) chartPresencas.destroy();
 
-            // Configurar Chart 1: Porcentagem por Turma (Donut)
             const ctxDonut = document.getElementById('chart-turmas-percentage').getContext('2d');
             chartTurmas = new Chart(ctxDonut, {
                 type: 'doughnut',
@@ -711,9 +667,7 @@
                     labels: labelsTurma.length > 0 ? labelsTurma : ["Nenhuma cadastrada"],
                     datasets: [{
                         data: dadosPorcentagem.length > 0 ? dadosPorcentagem : [100],
-                        backgroundColor: [
-                            '#3fcf8e', '#3b82f6', '#a855f7', '#f59e0b', '#ec4899', '#14b8a6'
-                        ],
+                        backgroundColor: ['#3fcf8e', '#3b82f6', '#a855f7', '#f59e0b', '#ec4899', '#14b8a6'],
                         borderWidth: isDark ? 2 : 1,
                         borderColor: isDark ? '#1e1e1e' : '#ffffff'
                     }]
@@ -724,23 +678,12 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: {
-                                color: textColor,
-                                font: { family: 'Inter', size: 11 }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.label}: ${context.raw}%`;
-                                }
-                            }
+                            labels: { color: textColor, font: { family: 'Inter', size: 11 } }
                         }
                     }
                 }
             });
 
-            // Configurar Chart 2: Total de Presenças por Turma (Barra)
             const ctxBar = document.getElementById('chart-presencas-bar').getContext('2d');
             chartPresencas = new Chart(ctxBar, {
                 type: 'bar',
@@ -768,34 +711,15 @@
                             ticks: { color: textColor, precision: 0 }
                         }
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` Presenças: ${context.raw}`;
-                                }
-                            }
-                        }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             });
         }
 
-        // --- SISTEMA DE PESQUISA EM TEMPO REAL ---
-        function filtrarParticipantes() {
-            const query = document.getElementById('input-busca').value.toLowerCase().trim();
-            const listaFiltrada = state.participantes.filter(p => {
-                return p.nome.toLowerCase().includes(query) || p.funcao.toLowerCase().includes(query);
-            });
-            renderParticipantes(listaFiltrada);
-        }
-
-        // --- EXPORTADORES DE ARQUIVOS (Planilha e Texto) ---
-
+        // --- EXPORTADORES ---
         function exportarPlanilha() {
             if (state.participantes.length === 0) {
-                showToast("Não existem participantes cadastrados para exportar!", "error");
+                showToast("Não há dados para exportar!", "error");
                 return;
             }
 
@@ -809,21 +733,18 @@
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Participantes");
-            
-            // Layout autossuficiente para gerar e descarregar planilha
-            XLSX.writeFile(wb, "lista_participantes_presenca.xlsx");
-            showToast("Planilha Excel gerada e baixada com sucesso!");
+            XLSX.writeFile(wb, "lista_syspessoas.xlsx");
+            showToast("Planilha exportada com sucesso!");
         }
 
         function exportarTexto() {
             if (state.participantes.length === 0) {
-                showToast("Não há dados de participantes para exportar!", "error");
+                showToast("Não há dados para exportar!", "error");
                 return;
             }
 
             let txt = "=========================================\n";
             txt += "    SISTEMA SYSPESSOAS - RELATÓRIO\n";
-            txt += `    Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}\n`;
             txt += "=========================================\n\n";
 
             state.turmas.forEach(t => {
@@ -831,10 +752,10 @@
                 txt += "-----------------------------------------\n";
                 const filtrados = state.participantes.filter(p => p.turma_id === t.id);
                 if (filtrados.length === 0) {
-                    txt += " (Nenhum participante nesta turma)\n";
+                    txt += " (Sem integrantes)\n";
                 } else {
                     filtrados.forEach((p, idx) => {
-                        txt += ` ${idx + 1}. Nome: ${p.nome.padEnd(25, ' ')} | Função: ${p.funcao.padEnd(15, ' ')} | Presenças: ${p.presencas}\n`;
+                        txt += ` ${idx + 1}. ${p.nome.padEnd(25, ' ')} | Função: ${p.funcao.padEnd(15, ' ')} | Presenças: ${p.presencas}\n`;
                     });
                 }
                 txt += "\n";
@@ -845,71 +766,79 @@
             link.href = URL.createObjectURL(blob);
             link.download = "relatorio_presenca.txt";
             link.click();
-            showToast("Relatório de texto baixado!");
+            showToast("Relatório baixado com sucesso!");
         }
 
-        // --- COMPONENTES VISUAIS E UTILITÁRIOS (TOAST, MODALS, THEME) ---
-
-        // Toast Notification System
-        function showToast(message, type = "success") {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const msg = document.getElementById('toast-msg');
-
-            msg.textContent = message;
-            
-            if (type === "success") {
-                toast.className = "fixed top-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 z-50 flex items-center gap-2 text-white bg-emerald-600 dark:bg-emerald-700";
-                icon.className = "ph-fill ph-check-circle text-xl";
-            } else {
-                toast.className = "fixed top-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 z-50 flex items-center gap-2 text-white bg-red-600 dark:bg-red-700";
-                icon.className = "ph-fill ph-warning-octagon text-xl";
-            }
-
-            // Mostrar toast
-            toast.classList.remove('translate-x-full', 'opacity-0');
-            
-            // Esconder após 3.5 segundos
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-            }, 3500);
-        }
-
-        // Modal de Confirmação Customizado
-        let confirmPromiseResolver;
-        function openConfirmModal(title, message) {
-            document.getElementById('confirm-title').textContent = title;
-            document.getElementById('confirm-msg').textContent = message;
-            document.getElementById('modal-confirm').classList.remove('hidden');
-            return new Promise((resolve) => {
-                confirmPromiseResolver = resolve;
+        // --- SISTEMA DE FILTRO EM TEMPO REAL ---
+        function filtrarParticipantes() {
+            const query = document.getElementById('input-busca').value.toLowerCase().trim();
+            const filtrados = state.participantes.filter(p => {
+                return p.nome.toLowerCase().includes(query) || p.funcao.toLowerCase().includes(query);
             });
+            renderParticipantes(filtrados);
         }
 
-        function closeConfirmModal(result) {
-            document.getElementById('modal-confirm').classList.add('hidden');
-            if (confirmPromiseResolver) {
-                confirmPromiseResolver(result);
-            }
+        // --- CONTROLES DE DESIGN E SIDEBAR ---
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
             
-            // Acionar deleção se confirmado
-            if (result && deleteTargetId) {
-                if (deleteTargetType === 'participante') {
-                    executeDeleteParticipante(deleteTargetId);
-                } else if (deleteTargetType === 'turma') {
-                    executeDeleteTurma(deleteTargetId);
-                }
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                icon.className = "ph ph-moon text-xl";
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                icon.className = "ph ph-sun text-xl";
+                localStorage.setItem('theme', 'dark');
             }
-            deleteTargetId = null;
-            deleteTargetType = '';
+            renderCharts();
         }
 
-        // Abrir/Fechar Modais Normais
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
+        function navigateTo(id) {
+            document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
+            document.getElementById(`view-${id}`).classList.add('active');
+            
+            const titulos = {
+                'dashboard': 'Dashboard',
+                'participantes': 'Gerenciar Participantes',
+                'turmas': 'Gerenciar Turmas'
+            };
+            document.getElementById('page-title').textContent = titulos[id] || 'SysPessoas';
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-darkborder font-medium transition-all";
+            });
+            const activeBtn = document.getElementById(`nav-${id}`);
+            if (activeBtn) {
+                activeBtn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold transition-all";
+            }
+
+            if (window.innerWidth < 768) {
+                toggleSidebar();
+            }
+
+            if (id === 'dashboard') {
+                setTimeout(renderCharts, 50);
+            }
         }
 
-        function openModalParticipante(id = null) {
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function openModalParticipante() {
             document.getElementById('part-id').value = "";
             document.getElementById('part-nome').value = "";
             document.getElementById('part-funcao').value = "";
@@ -933,92 +862,83 @@
             document.getElementById('modal-participante').classList.remove('hidden');
         }
 
-        // Navegação de Abas
-        function navigateTo(id) {
-            document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
-            document.getElementById(`view-${id}`).classList.add('active');
-            
-            // Títulos das Páginas
-            const titulos = {
-                'dashboard': 'Dashboard',
-                'participantes': 'Gerenciar Participantes',
-                'turmas': 'Gerenciar Turmas'
-            };
-            document.getElementById('page-title').textContent = titulos[id] || 'SysPessoas';
-
-            // Estilizar Botões da Sidebar
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-darkborder font-medium transition-all";
+        // Modal de Confirmação Customizado
+        let confirmPromiseResolver;
+        function openConfirmModal(title, message) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-msg').textContent = message;
+            document.getElementById('modal-confirm').classList.remove('hidden');
+            return new Promise((resolve) => {
+                confirmPromiseResolver = resolve;
             });
-            const activeBtn = document.getElementById(`nav-${id}`);
-            if (activeBtn) {
-                activeBtn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold transition-all";
-            }
-
-            // Fechar sidebar no celular após selecionar uma aba
-            if (window.innerWidth < 768) {
-                toggleSidebar();
-            }
-
-            // Redesenhar gráficos ao abrir a aba dashboard para redimensionamento adequado
-            if (id === 'dashboard') {
-                setTimeout(renderCharts, 100);
-            }
         }
 
-        // Toggle Sidebar para Mobile
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
+        function closeConfirmModal(result) {
+            document.getElementById('modal-confirm').classList.add('hidden');
+            if (confirmPromiseResolver) {
+                confirmPromiseResolver(result);
+            }
             
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
+            if (result && deleteTargetId) {
+                if (deleteTargetType === 'participante') {
+                    executeDeleteParticipante(deleteTargetId);
+                } else if (deleteTargetType === 'turma') {
+                    executeDeleteTurma(deleteTargetId);
+                }
             }
+            deleteTargetId = null;
+            deleteTargetType = '';
         }
 
-        // Toggle Dark Mode
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msg = document.getElementById('toast-msg');
+
+            msg.textContent = message;
             
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                html.classList.add('light');
-                icon.className = "ph ph-moon text-xl";
-                localStorage.setItem('theme', 'light');
+            if (type === "success") {
+                toast.className = "fixed top-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 z-50 flex items-center gap-2 text-white bg-emerald-600 dark:bg-emerald-700";
+                icon.className = "ph-fill ph-check-circle text-xl";
             } else {
-                html.classList.remove('light');
-                html.classList.add('dark');
-                icon.className = "ph ph-sun text-xl";
-                localStorage.setItem('theme', 'dark');
+                toast.className = "fixed top-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 z-50 flex items-center gap-2 text-white bg-red-600 dark:bg-red-700";
+                icon.className = "ph-fill ph-warning-octagon text-xl";
             }
-            // Recarrega as cores do gráfico
-            renderCharts();
+
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+            }, 3000);
         }
 
-        // Recupera Tema Salvo do Usuário
-        function loadSavedTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            const icon = document.getElementById('theme-icon');
-            
-            if (savedTheme === 'dark') {
-                document.documentElement.className = 'dark';
-                if (icon) icon.className = "ph ph-sun text-xl";
-            } else {
-                document.documentElement.className = 'light';
-                if (icon) icon.className = "ph ph-moon text-xl";
-            }
-        }
+        // Vinculando as funções ao escopo global (window) para manter o HTML simplificado
+        window.saveParticipante = saveParticipante;
+        window.promptDeleteParticipante = promptDeleteParticipante;
+        window.quickSaveTurma = quickSaveTurma;
+        window.promptDeleteTurma = promptDeleteTurma;
+        window.updatePresencaRapida = updatePresencaRapida;
+        window.exportarPlanilha = exportarPlanilha;
+        window.exportarTexto = exportarTexto;
+        window.filtrarParticipantes = filtrarParticipantes;
+        window.toggleDarkMode = toggleDarkMode;
+        window.navigateTo = navigateTo;
+        window.toggleSidebar = toggleSidebar;
+        window.openModalParticipante = openModalParticipante;
+        window.editParticipante = editParticipante;
+        window.closeConfirmModal = closeConfirmModal;
+        window.closeModal = closeModal;
 
-        // --- INICIALIZAÇÃO GERAL ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadSavedTheme();
-            detectDatabaseMode();
-        });
+        // Recuperar tema salvo
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.className = savedTheme;
+        document.getElementById('theme-icon').className = savedTheme === 'dark' ? "ph ph-sun text-xl" : "ph ph-moon text-xl";
+
+        // Inicialização
+        initSyncEngine();
     </script>
 </body>
 </html>
