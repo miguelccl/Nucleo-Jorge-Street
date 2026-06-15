@@ -26,218 +26,8 @@
     
     <!-- Ícones e Bibliotecas -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Estilização da barra de rolagem */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-    </style>
-</head>
-<body class="bg-gray-50 text-gray-800 dark:bg-darkbg dark:text-gray-100 h-screen overflow-hidden flex">
-
-    <!-- Toast de Notificação -->
-    <div id="toast" class="fixed top-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full opacity-0 z-50 flex items-center gap-2 text-white bg-gray-800 dark:bg-gray-700">
-        <i id="toast-icon" class="ph-fill ph-info text-xl"></i>
-        <span id="toast-msg" class="font-medium">Mensagem</span>
-    </div>
-
-    <!-- Modal de Participante -->
-    <div id="modal-participante" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-darkcard w-full max-w-md rounded-2xl shadow-xl transform scale-95 transition-transform duration-300 p-6 relative">
-            <button onclick="closeModal('modal-participante')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                <i class="ph ph-x text-xl"></i>
-            </button>
-            <h2 id="modal-title" class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Novo Participante</h2>
-            <input type="hidden" id="part-id">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Nome Completo</label>
-                    <input type="text" id="part-nome" placeholder="Ex: Maria Joaquina" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Função</label>
-                    <input type="text" id="part-funcao" placeholder="Ex: Visitante, Membro, Líder..." class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Vezes no Núcleo</label>
-                    <input type="number" id="part-presencas" min="0" placeholder="Ex: 1" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Turma</label>
-                    <select id="part-turma" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
-                        <!-- Preenchido via JS -->
-                    </select>
-                </div>
-                <div class="pt-2">
-                    <button onclick="saveParticipante()" class="w-full bg-primary hover:bg-primary-hover text-white p-3 rounded-xl font-bold transition-colors">Salvar Dados</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sidebar / Menu Lateral -->
-    <aside id="sidebar" class="bg-white dark:bg-darkcard w-64 h-full border-r border-gray-200 dark:border-darkborder flex flex-col absolute md:relative z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
-        <div class="p-5 flex items-center justify-between md:justify-start gap-2 border-b border-gray-100 dark:border-darkborder">
-            <div class="flex items-center gap-2 text-primary font-bold text-xl">
-                <i class="ph-fill ph-users-three text-3xl"></i> SysPessoas
-            </div>
-            <button class="md:hidden text-gray-500 text-2xl" onclick="toggleSidebar()">
-                <i class="ph ph-x"></i>
-            </button>
-        </div>
-        
-        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-2">
-            <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-primary bg-primary/10 font-medium transition-colors">
-                <i class="ph ph-squares-four text-xl"></i> Dashboard
-            </button>
-            <button onclick="navigateTo('participantes')" id="nav-participantes" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-darkborder font-medium transition-colors">
-                <i class="ph ph-user-list text-xl"></i> Participantes
-            </button>
-            <button onclick="navigateTo('turmas')" id="nav-turmas" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-darkborder font-medium transition-colors">
-                <i class="ph ph-books text-xl"></i> Turmas
-            </button>
-        </nav>
-    </aside>
-
-    <!-- Overlay para mobile -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
-
-    <!-- Conteúdo Principal -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
-        <header class="bg-white dark:bg-darkcard border-b border-gray-200 dark:border-darkborder h-16 flex items-center px-4 justify-between z-10">
-            <div class="flex items-center">
-                <button class="md:hidden p-2 mr-2 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-darkborder" onclick="toggleSidebar()">
-                    <i class="ph ph-list text-2xl"></i>
-                </button>
-                <h1 id="page-title" class="font-bold text-xl">Dashboard</h1>
-            </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-4 md:p-6" id="content-area">
-            
-            <!-- View: Dashboard -->
-            <section id="view-dashboard" class="view-section active">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-darkborder flex items-center gap-4">
-                        <div class="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl text-blue-600 dark:text-blue-400">
-                            <i class="ph ph-users text-3xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total de Participantes</h3>
-                            <p class="text-3xl font-bold mt-1" id="stat-total">0</p>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-darkborder flex items-center gap-4">
-                        <div class="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl text-purple-600 dark:text-purple-400">
-                            <i class="ph ph-books text-3xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total de Turmas</h3>
-                            <p class="text-3xl font-bold mt-1" id="stat-turmas">0</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- View: Participantes -->
-            <section id="view-participantes" class="view-section">
-                <div class="mb-4 flex flex-col xl:flex-row gap-3 justify-between items-start xl:items-center">
-                    <div class="relative w-full xl:w-96">
-                        <i class="ph ph-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" placeholder="Buscar participante..." class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow">
-                    </div>
-                    
-                    <div class="flex flex-wrap gap-2 w-full xl:w-auto">
-                        <button onclick="exportarPlanilha()" class="flex-1 xl:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors" title="Exportar para Planilha (Excel/CSV)">
-                            <i class="ph ph-file-xls text-lg"></i> <span class="hidden sm:inline">Planilha</span>
-                        </button>
-                        <button onclick="exportarTexto()" class="flex-1 xl:flex-none bg-gray-600 hover:bg-gray-700 text-white px-4 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors" title="Exportar para Arquivo de Texto">
-                            <i class="ph ph-file-text text-lg"></i> <span class="hidden sm:inline">Texto</span>
-                        </button>
-                        <button onclick="openModalParticipante()" class="flex-1 xl:flex-none bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors">
-                            <i class="ph ph-plus text-lg"></i> <span class="hidden sm:inline">Novo</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="lista-participantes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Preenchido via JS -->
-                </div>
-            </section>
-
-            <!-- View: Turmas -->
-            <section id="view-turmas" class="view-section">
-                <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-darkborder mb-6">
-                    <h3 class="font-bold text-lg mb-3">Adicionar Nova Turma</h3>
-                    <div class="flex flex-col md:flex-row gap-3">
-                        <!-- Campo Curso -->
-                        <input type="text" id="quick-turma-curso" placeholder="Nome do Curso (ex: Informática)" class="flex-1 p-3 bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50">
-                        <!-- Campo Ano -->
-                        <select id="quick-turma-ano" class="md:w-32 p-3 bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50">
-                            <option value="1">1º Ano</option>
-                            <option value="2">2º Ano</option>
-                            <option value="3">3º Ano</option>
-                        </select>
-                        <button onclick="quickSaveTurma()" class="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold transition-colors whitespace-nowrap">
-                            Salvar Turma
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="grid-turmas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Preenchido via JS -->
-                </div>
-            </section>
-        </div>
-    </main>
-
-   <!DOCTYPE html>
-<html lang="pt-BR" class="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestão de Participantes e Presença</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#3fcf8e',
-                        'primary-hover': '#24b47e',
-                        darkbg: '#121212',
-                        darkcard: '#1e1e1e',
-                        darkborder: '#2d2d2d'
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -255,74 +45,243 @@
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 dark:bg-darkbg dark:text-gray-100 h-screen overflow-hidden flex">
+<body class="bg-gray-50 text-gray-800 dark:bg-darkbg dark:text-gray-100 h-screen overflow-hidden flex transition-colors duration-200">
 
+    <!-- Toast de Notificação -->
     <div id="toast" class="fixed top-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full opacity-0 z-50 flex items-center gap-2 text-white bg-gray-800 dark:bg-gray-700">
         <i id="toast-icon" class="ph-fill ph-info text-xl"></i>
         <span id="toast-msg" class="font-medium">Mensagem</span>
     </div>
 
-    <div id="modal-participante" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-darkcard w-full max-w-md rounded-2xl shadow-xl transform scale-95 transition-transform duration-300 p-6 relative">
-            <button onclick="closeModal('modal-participante')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="ph ph-x text-xl"></i></button>
-            <h2 id="modal-title" class="text-xl font-bold mb-4">Novo Participante</h2>
-            <input type="hidden" id="part-id">
-            <div class="space-y-4">
-                <input type="text" id="part-nome" placeholder="Nome Completo" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none">
-                <input type="text" id="part-funcao" placeholder="Função" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder">
-                <input type="number" id="part-presencas" placeholder="Presenças" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder">
-                <select id="part-turma" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder"></select>
-                <button onclick="saveParticipante()" class="w-full bg-primary hover:bg-primary-hover text-white p-3 rounded-xl font-bold transition-colors">Salvar</button>
+    <!-- Modal de Confirmação customizado (Substitui o alert/confirm do browser) -->
+    <div id="modal-confirm" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkcard w-full max-w-sm rounded-2xl p-6 shadow-xl transform scale-95 transition-transform duration-300">
+            <h3 class="text-lg font-bold mb-2" id="confirm-title">Confirmar Ação</h3>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-6" id="confirm-msg">Você tem certeza que deseja realizar esta ação?</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeConfirmModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-darkborder dark:hover:bg-neutral-700 rounded-xl font-medium transition-colors">Cancelar</button>
+                <button onclick="closeConfirmModal(true)" id="btn-confirm-action" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors">Confirmar</button>
             </div>
         </div>
     </div>
 
+    <!-- Modal de Participante -->
+    <div id="modal-participante" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 transition-all duration-300">
+        <div class="bg-white dark:bg-darkcard w-full max-w-md rounded-2xl shadow-xl p-6 relative">
+            <button onclick="closeModal('modal-participante')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <i class="ph ph-x text-xl"></i>
+            </button>
+            <h2 id="modal-title" class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Novo Participante</h2>
+            <input type="hidden" id="part-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Nome Completo</label>
+                    <input type="text" id="part-nome" placeholder="Nome do participante" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Função / Tipo</label>
+                    <input type="text" id="part-funcao" placeholder="Ex: Aluno, Visitante, Monitor" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Número de Presenças</label>
+                    <input type="number" id="part-presencas" min="0" placeholder="Quantidade de presenças" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Turma</label>
+                    <select id="part-turma" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
+                        <!-- Preenchido dinamicamente -->
+                    </select>
+                </div>
+                <button onclick="saveParticipante()" class="w-full bg-primary hover:bg-primary-hover text-white p-3 rounded-xl font-bold transition-colors shadow-md shadow-primary/20">Salvar Participante</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar / Menu Lateral -->
     <aside id="sidebar" class="bg-white dark:bg-darkcard w-64 h-full border-r border-gray-200 dark:border-darkborder flex flex-col absolute md:relative z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
-        <div class="p-5 flex items-center gap-2 text-primary font-bold text-xl border-b border-gray-100 dark:border-darkborder"><i class="ph-fill ph-users-three text-3xl"></i> SysPessoas</div>
-        <nav class="flex-1 p-3 space-y-2">
-            <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-medium"><i class="ph ph-squares-four text-xl"></i> Dashboard</button>
-            <button onclick="navigateTo('participantes')" id="nav-participantes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-darkborder"><i class="ph ph-user-list text-xl"></i> Participantes</button>
-            <button onclick="navigateTo('turmas')" id="nav-turmas" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-darkborder"><i class="ph ph-books text-xl"></i> Turmas</button>
+        <div class="p-5 flex items-center justify-between border-b border-gray-100 dark:border-darkborder">
+            <div class="flex items-center gap-2 text-primary font-bold text-xl">
+                <i class="ph-fill ph-users-three text-3xl"></i> SysPessoas
+            </div>
+            <button class="md:hidden text-gray-500 text-2xl hover:text-gray-700 dark:hover:text-gray-300" onclick="toggleSidebar()">
+                <i class="ph ph-x"></i>
+            </button>
+        </div>
+        
+        <!-- Status de Conexão -->
+        <div class="px-4 py-2 bg-gray-50 dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-darkborder flex items-center gap-2 text-xs">
+            <span id="conn-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            <span id="conn-status" class="text-gray-500 dark:text-gray-400 font-medium">Conectando...</span>
+        </div>
+        
+        <nav class="flex-1 p-3 space-y-2 overflow-y-auto">
+            <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold transition-all">
+                <i class="ph ph-squares-four text-xl"></i> Dashboard
+            </button>
+            <button onclick="navigateTo('participantes')" id="nav-participantes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-darkborder font-medium transition-all">
+                <i class="ph ph-user-list text-xl"></i> Participantes
+            </button>
+            <button onclick="navigateTo('turmas')" id="nav-turmas" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-darkborder font-medium transition-all">
+                <i class="ph ph-books text-xl"></i> Turmas
+            </button>
         </nav>
+
+        <div class="p-4 border-t border-gray-100 dark:border-darkborder text-xs text-center text-gray-400">
+            SysPessoas v2.0 &copy; 2026
+        </div>
     </aside>
 
+    <!-- Overlay de fundo escuro para mobile -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Conteúdo Principal -->
     <main class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
-        <header class="bg-white dark:bg-darkcard border-b border-gray-200 dark:border-darkborder h-16 flex items-center px-4 justify-between">
-            <h1 id="page-title" class="font-bold text-xl">Dashboard</h1>
+        <!-- Header -->
+        <header class="bg-white dark:bg-darkcard border-b border-gray-200 dark:border-darkborder h-16 flex items-center px-4 justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <button class="md:hidden p-2 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-darkborder" onclick="toggleSidebar()">
+                    <i class="ph ph-list text-2xl"></i>
+                </button>
+                <h1 id="page-title" class="font-bold text-xl">Dashboard</h1>
+            </div>
+
+            <!-- Controles do Header (Tema e Atalhos) -->
+            <div class="flex items-center gap-3">
+                <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-darkborder text-gray-600 dark:text-gray-300 transition-colors" title="Alternar Modo de Cor">
+                    <i id="theme-icon" class="ph ph-moon text-xl"></i>
+                </button>
+                <button onclick="openModalParticipante()" class="bg-primary hover:bg-primary-hover text-white px-3.5 py-1.5 sm:py-2 sm:px-4 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+                    <i class="ph ph-plus-circle text-lg"></i> <span class="hidden sm:inline">Participante</span>
+                </button>
+            </div>
         </header>
 
+        <!-- Área dos Conteúdos das Abas -->
         <div class="flex-1 overflow-y-auto p-4 md:p-6" id="content-area">
-            <section id="view-dashboard" class="view-section active">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-darkborder">
-                        <h3 class="text-gray-500">Total Participantes</h3>
-                        <p class="text-3xl font-bold" id="stat-total">0</p>
+            
+            <!-- VIEW: DASHBOARD -->
+            <section id="view-dashboard" class="view-section active space-y-6">
+                <!-- Cards de Estatísticas Rápidas -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-darkborder flex items-center gap-4 transition-all hover:shadow-md">
+                        <div class="bg-blue-100 dark:bg-blue-900/30 p-3.5 rounded-2xl text-blue-600 dark:text-blue-400">
+                            <i class="ph-fill ph-users text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Participantes</h3>
+                            <p class="text-3xl font-bold mt-0.5" id="stat-total">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-darkborder flex items-center gap-4 transition-all hover:shadow-md">
+                        <div class="bg-emerald-100 dark:bg-emerald-900/30 p-3.5 rounded-2xl text-emerald-600 dark:text-emerald-400">
+                            <i class="ph-fill ph-check-square-offset text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total de Presenças</h3>
+                            <p class="text-3xl font-bold mt-0.5" id="stat-presencas">0</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-darkborder flex items-center gap-4 transition-all hover:shadow-md sm:col-span-2 lg:col-span-1">
+                        <div class="bg-purple-100 dark:bg-purple-900/30 p-3.5 rounded-2xl text-purple-600 dark:text-purple-400">
+                            <i class="ph-fill ph-books text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total de Turmas</h3>
+                            <p class="text-3xl font-bold mt-0.5" id="stat-turmas">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção de Gráficos (Dashboard) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Gráfico 1: Porcentagem de Alunos por Turma (Donut) -->
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col h-[350px]">
+                        <h3 class="font-bold text-base mb-3 flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                            <i class="ph ph-chart-pie-slice text-xl text-primary"></i> Participantes por Turma (%)
+                        </h3>
+                        <div class="flex-1 relative flex items-center justify-center min-h-0">
+                            <canvas id="chart-turmas-percentage"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico 2: Média de Presença por Turma (Barra) -->
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col h-[350px]">
+                        <h3 class="font-bold text-base mb-3 flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                            <i class="ph ph-chart-bar text-xl text-blue-500"></i> Total de Presenças por Turma
+                        </h3>
+                        <div class="flex-1 relative flex items-center justify-center min-h-0">
+                            <canvas id="chart-presencas-bar"></canvas>
+                        </div>
                     </div>
                 </div>
             </section>
             
+            <!-- VIEW: PARTICIPANTES -->
             <section id="view-participantes" class="view-section">
-                <div class="mb-4 flex gap-2">
-                    <button onclick="exportarPlanilha()" class="bg-green-600 text-white px-4 py-2 rounded-xl">Planilha</button>
-                    <button onclick="exportarTexto()" class="bg-gray-600 text-white px-4 py-2 rounded-xl">Texto</button>
-                    <button onclick="openModalParticipante()" class="bg-primary text-white px-4 py-2 rounded-xl">Novo</button>
+                <!-- Barra de Ferramentas / Filtros -->
+                <div class="mb-6 flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+                    <div class="relative flex-1 max-w-md">
+                        <i class="ph ph-magnifying-glass absolute left-3.5 top-3.5 text-gray-400 text-lg"></i>
+                        <input type="text" id="input-busca" oninput="filtrarParticipantes()" placeholder="Buscar por participante ou função..." class="w-full pl-11 pr-4 py-3 bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow">
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="exportarPlanilha()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors" title="Exportar dados para Excel (.xlsx)">
+                            <i class="ph ph-file-xls text-xl"></i> Planilha
+                        </button>
+                        <button onclick="exportarTexto()" class="flex-1 sm:flex-none bg-zinc-600 hover:bg-zinc-700 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors" title="Exportar dados para arquivo de texto (.txt)">
+                            <i class="ph ph-file-text text-xl"></i> Texto
+                        </button>
+                    </div>
                 </div>
-                <div id="lista-participantes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+                <!-- Grid de Participantes -->
+                <div id="lista-participantes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Cards de participante injetados dinamicamente por JS -->
+                </div>
+                
+                <!-- Feedback de Nenhum Participante Encontrado -->
+                <div id="no-participants" class="hidden text-center py-12 text-gray-400">
+                    <i class="ph ph-user-focus text-6xl mb-2"></i>
+                    <p class="text-lg">Nenhum participante encontrado.</p>
+                </div>
             </section>
 
+            <!-- VIEW: TURMAS -->
             <section id="view-turmas" class="view-section">
-                <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border mb-6">
-                    <input type="text" id="quick-turma-curso" placeholder="Nome do Curso" class="w-full p-2 border rounded-xl mb-2">
-                    <select id="quick-turma-ano" class="w-full p-2 border rounded-xl mb-2"><option value="1">1º Ano</option><option value="2">2º Ano</option><option value="3">3º Ano</option></select>
-                    <button onclick="quickSaveTurma()" class="w-full bg-primary text-white p-2 rounded-xl">Salvar Turma</button>
+                <!-- Cadastrar Nova Turma -->
+                <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-200 dark:border-darkborder mb-6">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2 text-gray-700 dark:text-gray-100">
+                        <i class="ph ph-folder-plus text-xl text-primary"></i> Adicionar Nova Turma
+                    </h3>
+                    <div class="flex flex-col md:flex-row gap-3">
+                        <input type="text" id="quick-turma-curso" placeholder="Nome do Curso (Ex: Informática, Administração)" class="flex-1 p-3 bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        
+                        <select id="quick-turma-ano" class="md:w-48 p-3 bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50">
+                            <option value="1">1º Ano</option>
+                            <option value="2">2º Ano</option>
+                            <option value="3">3º Ano</option>
+                            <option value="Outro">Outro Período</option>
+                        </select>
+                        
+                        <button onclick="quickSaveTurma()" class="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-bold transition-colors whitespace-nowrap shadow-sm">
+                            Salvar Turma
+                        </button>
+                    </div>
                 </div>
-                <div id="grid-turmas" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                
+                <!-- Grid de Turmas Cadastradas -->
+                <div id="grid-turmas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Cards de Turma injetados dinamicamente por JS -->
+                </div>
             </section>
         </div>
     </main>
 
     <script>
-        // --- CONFIGURAÇÃO FIREBASE ---
+        // --- CONFIGURAÇÃO DO FIREBASE (Com detecção inteligente) ---
         const firebaseConfig = {
             apiKey: "SUA_API_KEY",
             authDomain: "SUA_URL.firebaseapp.com",
@@ -332,98 +291,734 @@
             appId: "..."
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        let db = null;
+        let isFirebaseActive = false;
 
-        let state = { participantes: [], turmas: [] };
+        // Estado local sincronizado (Backup para LocalStorage se Firebase estiver ausente)
+        let state = {
+            participantes: [],
+            turmas: []
+        };
 
-        async function init() {
-            try {
-                const snapT = await db.collection("turmas").get();
-                state.turmas = snapT.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // --- SISTEMA DE ARMAZENAMENTO MISTO (FIREBASE / LOCAL STORAGE) ---
+        function detectDatabaseMode() {
+            const connIndicator = document.getElementById('conn-indicator');
+            const connStatus = document.getElementById('conn-status');
 
-                const snapP = await db.collection("participantes").get();
-                state.participantes = snapP.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (err) { console.error(err); }
-            render();
+            if (firebaseConfig.apiKey === "SUA_API_KEY" || firebaseConfig.projectId === "SEU_ID" || !firebaseConfig.apiKey) {
+                // Modo LocalStorage Ativo
+                isFirebaseActive = false;
+                connIndicator.className = "w-2.5 h-2.5 rounded-full bg-blue-500";
+                connStatus.textContent = "Modo Local (Offline)";
+                loadLocalData();
+                render();
+            } else {
+                // Tenta conectar no Firebase
+                try {
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    isFirebaseActive = true;
+                    connIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                    connStatus.textContent = "Firebase Online";
+                    
+                    // Escuta alterações em tempo real via Firestore
+                    listenFirestore();
+                } catch (error) {
+                    console.error("Erro ao iniciar Firebase, usando fallback offline:", error);
+                    isFirebaseActive = false;
+                    connIndicator.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+                    connStatus.textContent = "Erro Firebase (Modo Local)";
+                    loadLocalData();
+                    render();
+                }
+            }
         }
 
+        // Carrega dados offline salvos no LocalStorage
+        function loadLocalData() {
+            const storedParticipantes = localStorage.getItem('sys_participantes');
+            const storedTurmas = localStorage.getItem('sys_turmas');
+            
+            state.participantes = storedParticipantes ? JSON.parse(storedParticipantes) : getMockData().participantes;
+            state.turmas = storedTurmas ? JSON.parse(storedTurmas) : getMockData().turmas;
+            
+            // Salva os dados iniciais padrão se o storage estiver vazio
+            if (!storedParticipantes || !storedTurmas) {
+                saveToLocalStorage();
+            }
+        }
+
+        // Salva dados no LocalStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('sys_participantes', JSON.stringify(state.participantes));
+            localStorage.setItem('sys_turmas', JSON.stringify(state.turmas));
+        }
+
+        // Escuta o Firestore e sincroniza com o state
+        function listenFirestore() {
+            db.collection("turmas").onSnapshot((snap) => {
+                state.turmas = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render();
+            }, (err) => {
+                showToast("Erro ao sincronizar turmas no Firebase.", "error");
+            });
+
+            db.collection("participantes").onSnapshot((snap) => {
+                state.participantes = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render();
+            }, (err) => {
+                showToast("Erro ao sincronizar participantes no Firebase.", "error");
+            });
+        }
+
+        // --- DADOS DE EXEMPLO (Caso não possua Firebase configurado de início) ---
+        function getMockData() {
+            const turmas = [
+                { id: "t1", nome: "INFORMÁTICA - 1º ANO" },
+                { id: "t2", nome: "ADMINISTRAÇÃO - 2º ANO" },
+                { id: "t3", nome: "EDIFICAÇÕES - 3º ANO" }
+            ];
+            const participantes = [
+                { id: "p1", nome: "Ana Beatriz Silva", funcao: "Aluna", presencas: 12, turma_id: "t1" },
+                { id: "p2", nome: "Carlos Eduardo Souza", funcao: "Líder de Classe", presencas: 15, turma_id: "t1" },
+                { id: "p3", nome: "Mariana Costa", funcao: "Aluna", presencas: 8, turma_id: "t2" },
+                { id: "p4", nome: "João Pedro Pereira", funcao: "Monitor", presencas: 19, turma_id: "t3" },
+                { id: "p5", nome: "Fernanda Lima", funcao: "Aluna", presencas: 5, turma_id: "t2" }
+            ];
+            return { turmas, participantes };
+        }
+
+        // --- FUNÇÕES DE CRUD (Salvar, Editar, Deletar) ---
+
+        // Salvar ou Editar Participante
         async function saveParticipante() {
             const id = document.getElementById('part-id').value;
+            const nomeInput = document.getElementById('part-nome').value.trim();
+            const funcaoInput = document.getElementById('part-funcao').value.trim() || 'Participante';
+            const presencasInput = parseInt(document.getElementById('part-presencas').value) || 0;
+            const turmaSelect = document.getElementById('part-turma').value;
+
+            if (!nomeInput) {
+                showToast("O nome do participante é obrigatório!", "error");
+                return;
+            }
+
+            if (!turmaSelect) {
+                showToast("Por favor, selecione ou cadastre uma turma primeiro!", "error");
+                return;
+            }
+
             const data = {
-                nome: document.getElementById('part-nome').value,
-                funcao: document.getElementById('part-funcao').value,
-                presencas: parseInt(document.getElementById('part-presencas').value) || 0,
-                turma_id: document.getElementById('part-turma').value
+                nome: nomeInput,
+                funcao: funcaoInput,
+                presencas: Math.max(0, presencasInput),
+                turma_id: turmaSelect
             };
 
-            if (id) await db.collection("participantes").doc(id).update(data);
-            else await db.collection("participantes").add(data);
-            
+            if (isFirebaseActive) {
+                try {
+                    if (id) {
+                        await db.collection("participantes").doc(id).update(data);
+                        showToast("Participante atualizado no Firebase!");
+                    } else {
+                        await db.collection("participantes").add(data);
+                        showToast("Participante cadastrado no Firebase!");
+                    }
+                } catch (err) {
+                    showToast("Erro ao salvar no Firebase.", "error");
+                }
+            } else {
+                // Fluxo Local
+                if (id) {
+                    const idx = state.participantes.findIndex(p => p.id === id);
+                    if (idx !== -1) {
+                        state.participantes[idx] = { id, ...data };
+                        showToast("Participante atualizado localmente!");
+                    }
+                } else {
+                    const novoId = "p_" + Date.now();
+                    state.participantes.push({ id: novoId, ...data });
+                    showToast("Participante adicionado localmente!");
+                }
+                saveToLocalStorage();
+                render();
+            }
+
             closeModal('modal-participante');
-            init();
         }
 
-        async function deleteParticipante(id) {
-            await db.collection("participantes").doc(id).delete();
-            init();
+        // Deletar Participante
+        let deleteTargetId = null;
+        let deleteTargetType = ''; // 'participante' ou 'turma'
+
+        function promptDeleteParticipante(id) {
+            deleteTargetId = id;
+            deleteTargetType = 'participante';
+            const p = state.participantes.find(item => item.id === id);
+            openConfirmModal("Excluir Participante", `Tem certeza que deseja excluir "${p?.nome || 'este participante'}"? Esta ação não pode ser desfeita.`);
         }
 
-        async function deleteTurma(id) {
-            await db.collection("turmas").doc(id).delete();
-            init();
+        async function executeDeleteParticipante(id) {
+            if (isFirebaseActive) {
+                try {
+                    await db.collection("participantes").doc(id).delete();
+                    showToast("Participante removido do Firebase!");
+                } catch (err) {
+                    showToast("Erro ao excluir do Firebase.", "error");
+                }
+            } else {
+                state.participantes = state.participantes.filter(p => p.id !== id);
+                saveToLocalStorage();
+                showToast("Participante removido localmente!");
+                render();
+            }
         }
 
+        // Salvar Turma Rápido
         async function quickSaveTurma() {
-            const curso = document.getElementById('quick-turma-curso').value.toUpperCase();
+            const curso = document.getElementById('quick-turma-curso').value.trim().toUpperCase();
             const ano = document.getElementById('quick-turma-ano').value;
-            await db.collection("turmas").add({ nome: `${curso} - ${ano}º ANO` });
+            
+            if (!curso) {
+                showToast("Digite o nome do curso para cadastrar a turma!", "error");
+                return;
+            }
+
+            const nomeTurma = ano === "Outro" ? curso : `${curso} - ${ano}º ANO`;
+
+            // Evitar duplicações simples
+            const existe = state.turmas.some(t => t.nome.toUpperCase() === nomeTurma.toUpperCase());
+            if (existe) {
+                showToast("Essa turma já está cadastrada!", "error");
+                return;
+            }
+
+            const data = { nome: nomeTurma };
+
+            if (isFirebaseActive) {
+                try {
+                    await db.collection("turmas").add(data);
+                    showToast("Turma cadastrada no Firebase!");
+                } catch (err) {
+                    showToast("Erro ao criar turma no Firebase.", "error");
+                }
+            } else {
+                const novoId = "t_" + Date.now();
+                state.turmas.push({ id: novoId, ...data });
+                saveToLocalStorage();
+                showToast("Turma criada localmente!");
+                render();
+            }
+
             document.getElementById('quick-turma-curso').value = '';
-            init();
         }
 
-        // --- MANUTENÇÃO DAS FUNÇÕES DE EXPORTAÇÃO E UI ORIGINAIS ---
+        // Deletar Turma
+        function promptDeleteTurma(id) {
+            deleteTargetId = id;
+            deleteTargetType = 'turma';
+            const t = state.turmas.find(item => item.id === id);
+            const vinculados = state.participantes.filter(p => p.turma_id === id).length;
+            
+            let aviso = `Tem certeza que deseja remover a turma "${t?.nome}"?`;
+            if (vinculados > 0) {
+                aviso += ` Existem ${vinculados} participantes vinculados a ela que ficarão desassociados.`;
+            }
+
+            openConfirmModal("Excluir Turma", aviso);
+        }
+
+        async function executeDeleteTurma(id) {
+            if (isFirebaseActive) {
+                try {
+                    await db.collection("turmas").doc(id).delete();
+                    showToast("Turma excluída do Firebase!");
+                } catch (err) {
+                    showToast("Erro ao excluir turma do Firebase.", "error");
+                }
+            } else {
+                state.turmas = state.turmas.filter(t => t.id !== id);
+                // Opcional: Atualizar participantes órfãos
+                state.participantes = state.participantes.map(p => {
+                    if (p.turma_id === id) return { ...p, turma_id: "" };
+                    return p;
+                });
+                saveToLocalStorage();
+                showToast("Turma removida localmente!");
+                render();
+            }
+        }
+
+        // Adicionar / Remover presenças com um clique rápido (+/-)
+        async function updatePresencaRapida(id, alteracao) {
+            const p = state.participantes.find(item => item.id === id);
+            if (!p) return;
+            
+            const novaPresenca = Math.max(0, p.presencas + alteracao);
+
+            if (isFirebaseActive) {
+                try {
+                    await db.collection("participantes").doc(id).update({ presencas: novaPresenca });
+                } catch (e) {
+                    showToast("Erro ao alterar presenças.", "error");
+                }
+            } else {
+                p.presencas = novaPresenca;
+                saveToLocalStorage();
+                render();
+            }
+        }
+
+        // --- SISTEMA DE RENDERIZAÇÃO & GRÁFICOS ---
+        let chartTurmas = null;
+        let chartPresencas = null;
+
+        function render() {
+            // 1. Atualizar cards numéricos de estatísticas
+            const totalParticipantes = state.participantes.length;
+            const totalPresencas = state.participantes.reduce((acc, p) => acc + (p.presencas || 0), 0);
+            
+            document.getElementById('stat-total').textContent = totalParticipantes;
+            document.getElementById('stat-presencas').textContent = totalPresencas;
+            document.getElementById('stat-turmas').textContent = state.turmas.length;
+
+            // 2. Renderizar Select de Turma no Modal de Participante
+            const selectPartTurma = document.getElementById('part-turma');
+            selectPartTurma.innerHTML = state.turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+            if (state.turmas.length === 0) {
+                selectPartTurma.innerHTML = `<option value="">Nenhuma Turma Cadastrada</option>`;
+            }
+
+            // 3. Renderizar Lista de Participantes
+            renderParticipantes(state.participantes);
+
+            // 4. Renderizar Grade de Turmas
+            const gridTurmas = document.getElementById('grid-turmas');
+            gridTurmas.innerHTML = state.turmas.map(t => {
+                const totalMembros = state.participantes.filter(p => p.turma_id === t.id).length;
+                return `
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="bg-primary/10 text-primary dark:bg-primary/20 text-xs font-bold px-2.5 py-1 rounded-lg">TURMA</span>
+                                <button onclick="promptDeleteTurma('${t.id}')" class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                    <i class="ph ph-trash text-lg"></i>
+                                </button>
+                            </div>
+                            <h4 class="font-bold text-gray-800 dark:text-gray-100 mt-3 text-lg leading-snug">${t.nome}</h4>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-[#2d2d2d] flex items-center justify-between text-sm text-gray-500">
+                            <span>Integrantes Cadastrados:</span>
+                            <span class="font-bold text-gray-800 dark:text-gray-200">${totalMembros}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            if (state.turmas.length === 0) {
+                gridTurmas.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class="ph ph-folder-open text-6xl mb-2"></i>
+                        <p class="text-lg">Nenhuma turma adicionada. Use o painel acima para criar.</p>
+                    </div>
+                `;
+            }
+
+            // 5. Renderizar Gráficos atualizados
+            renderCharts();
+        }
+
+        // Renderiza lista de participantes filtrada
+        function renderParticipantes(lista) {
+            const container = document.getElementById('lista-participantes');
+            const noParticipants = document.getElementById('no-participants');
+
+            if (lista.length === 0) {
+                container.innerHTML = "";
+                noParticipants.classList.remove('hidden');
+                return;
+            }
+            noParticipants.classList.add('hidden');
+
+            container.innerHTML = lista.map(p => {
+                const turma = state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma';
+                return `
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-bold text-lg text-gray-800 dark:text-gray-50 leading-tight">${p.nome}</h4>
+                                    <span class="inline-block mt-1 text-xs bg-gray-100 dark:bg-darkborder text-gray-500 dark:text-gray-400 font-semibold px-2 py-0.5 rounded">${p.funcao}</span>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="editParticipante('${p.id}')" class="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 p-2 rounded-xl transition-colors" title="Editar">
+                                        <i class="ph ph-pencil-simple text-lg"></i>
+                                    </button>
+                                    <button onclick="promptDeleteParticipante('${p.id}')" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 p-2 rounded-xl transition-colors" title="Deletar">
+                                        <i class="ph ph-trash text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex flex-col gap-1 text-sm text-gray-500">
+                                <span class="flex items-center gap-1.5"><i class="ph ph-books text-base text-gray-400"></i> ${turma}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 pt-4 border-t border-gray-100 dark:border-[#2d2d2d] flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-400">Presenças:</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="updatePresencaRapida('${p.id}', -1)" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-darkborder hover:bg-gray-200 dark:hover:bg-neutral-700 flex items-center justify-center font-bold text-lg text-gray-600 dark:text-gray-200 transition-colors">-</button>
+                                <span class="font-bold text-gray-800 dark:text-gray-100 px-1 text-base min-w-[20px] text-center">${p.presencas}</span>
+                                <button onclick="updatePresencaRapida('${p.id}', 1)" class="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 flex items-center justify-center font-bold text-lg text-primary transition-colors">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Renderiza e atualiza os gráficos do Dashboard
+        function renderCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#9ca3af' : '#4b5563';
+            const gridColor = isDark ? '#2d2d2d' : '#f1f5f9';
+
+            // Dados para o Gráfico 1: Participantes por turma (%)
+            const total = state.participantes.length;
+            const labelsTurma = state.turmas.map(t => t.nome);
+            const dadosPorcentagem = state.turmas.map(t => {
+                const qtd = state.participantes.filter(p => p.turma_id === t.id).length;
+                return total > 0 ? parseFloat(((qtd / total) * 100).toFixed(1)) : 0;
+            });
+
+            // Dados para o Gráfico 2: Presenças Acumuladas por Turma
+            const dadosPresencas = state.turmas.map(t => {
+                return state.participantes
+                    .filter(p => p.turma_id === t.id)
+                    .reduce((acc, p) => acc + (p.presencas || 0), 0);
+            });
+
+            // Destruir gráficos anteriores para não bugar
+            if (chartTurmas) chartTurmas.destroy();
+            if (chartPresencas) chartPresencas.destroy();
+
+            // Configurar Chart 1: Porcentagem por Turma (Donut)
+            const ctxDonut = document.getElementById('chart-turmas-percentage').getContext('2d');
+            chartTurmas = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsTurma.length > 0 ? labelsTurma : ["Nenhuma cadastrada"],
+                    datasets: [{
+                        data: dadosPorcentagem.length > 0 ? dadosPorcentagem : [100],
+                        backgroundColor: [
+                            '#3fcf8e', '#3b82f6', '#a855f7', '#f59e0b', '#ec4899', '#14b8a6'
+                        ],
+                        borderWidth: isDark ? 2 : 1,
+                        borderColor: isDark ? '#1e1e1e' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: textColor,
+                                font: { family: 'Inter', size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Configurar Chart 2: Total de Presenças por Turma (Barra)
+            const ctxBar = document.getElementById('chart-presencas-bar').getContext('2d');
+            chartPresencas = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labelsTurma.length > 0 ? labelsTurma : ["Sem dados"],
+                    datasets: [{
+                        label: 'Total de Presenças',
+                        data: dadosPresencas.length > 0 ? dadosPresencas : [0],
+                        backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                        hoverBackgroundColor: '#3b82f6',
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor, font: { family: 'Inter', size: 10 } }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: { color: textColor, precision: 0 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Presenças: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- SISTEMA DE PESQUISA EM TEMPO REAL ---
+        function filtrarParticipantes() {
+            const query = document.getElementById('input-busca').value.toLowerCase().trim();
+            const listaFiltrada = state.participantes.filter(p => {
+                return p.nome.toLowerCase().includes(query) || p.funcao.toLowerCase().includes(query);
+            });
+            renderParticipantes(listaFiltrada);
+        }
+
+        // --- EXPORTADORES DE ARQUIVOS (Planilha e Texto) ---
+
         function exportarPlanilha() {
+            if (state.participantes.length === 0) {
+                showToast("Não existem participantes cadastrados para exportar!", "error");
+                return;
+            }
+
             const data = state.participantes.map(p => ({
                 Nome: p.nome,
-                Turma: state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma',
                 Função: p.funcao,
-                Presenças: p.presencas
+                Presenças: p.presencas,
+                Turma: state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma'
             }));
+
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Participantes");
-            XLSX.writeFile(wb, "participantes.xlsx");
+            
+            // Layout autossuficiente para gerar e descarregar planilha
+            XLSX.writeFile(wb, "lista_participantes_presenca.xlsx");
+            showToast("Planilha Excel gerada e baixada com sucesso!");
         }
 
         function exportarTexto() {
-            let txt = "LISTA DE PARTICIPANTES\n\n";
-            state.participantes.forEach(p => {
-                txt += `Nome: ${p.nome} | Turma: ${state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma'}\n`;
+            if (state.participantes.length === 0) {
+                showToast("Não há dados de participantes para exportar!", "error");
+                return;
+            }
+
+            let txt = "=========================================\n";
+            txt += "    SISTEMA SYSPESSOAS - RELATÓRIO\n";
+            txt += `    Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}\n`;
+            txt += "=========================================\n\n";
+
+            state.turmas.forEach(t => {
+                txt += `▶ TURMA: ${t.nome}\n`;
+                txt += "-----------------------------------------\n";
+                const filtrados = state.participantes.filter(p => p.turma_id === t.id);
+                if (filtrados.length === 0) {
+                    txt += " (Nenhum participante nesta turma)\n";
+                } else {
+                    filtrados.forEach((p, idx) => {
+                        txt += ` ${idx + 1}. Nome: ${p.nome.padEnd(25, ' ')} | Função: ${p.funcao.padEnd(15, ' ')} | Presenças: ${p.presencas}\n`;
+                    });
+                }
+                txt += "\n";
             });
-            const blob = new Blob([txt], { type: "text/plain" });
+
+            const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "lista.txt";
+            link.download = "relatorio_presenca.txt";
             link.click();
+            showToast("Relatório de texto baixado!");
         }
 
-        function render() {
-            document.getElementById('stat-total').textContent = state.participantes.length;
-            // ... (O resto da sua lógica de renderização segue aqui)
-            // Mantive a estrutura original que você já possuía
+        // --- COMPONENTES VISUAIS E UTILITÁRIOS (TOAST, MODALS, THEME) ---
+
+        // Toast Notification System
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msg = document.getElementById('toast-msg');
+
+            msg.textContent = message;
+            
+            if (type === "success") {
+                toast.className = "fixed top-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 z-50 flex items-center gap-2 text-white bg-emerald-600 dark:bg-emerald-700";
+                icon.className = "ph-fill ph-check-circle text-xl";
+            } else {
+                toast.className = "fixed top-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 z-50 flex items-center gap-2 text-white bg-red-600 dark:bg-red-700";
+                icon.className = "ph-fill ph-warning-octagon text-xl";
+            }
+
+            // Mostrar toast
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            
+            // Esconder após 3.5 segundos
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+            }, 3500);
         }
 
+        // Modal de Confirmação Customizado
+        let confirmPromiseResolver;
+        function openConfirmModal(title, message) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-msg').textContent = message;
+            document.getElementById('modal-confirm').classList.remove('hidden');
+            return new Promise((resolve) => {
+                confirmPromiseResolver = resolve;
+            });
+        }
+
+        function closeConfirmModal(result) {
+            document.getElementById('modal-confirm').classList.add('hidden');
+            if (confirmPromiseResolver) {
+                confirmPromiseResolver(result);
+            }
+            
+            // Acionar deleção se confirmado
+            if (result && deleteTargetId) {
+                if (deleteTargetType === 'participante') {
+                    executeDeleteParticipante(deleteTargetId);
+                } else if (deleteTargetType === 'turma') {
+                    executeDeleteTurma(deleteTargetId);
+                }
+            }
+            deleteTargetId = null;
+            deleteTargetType = '';
+        }
+
+        // Abrir/Fechar Modais Normais
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function openModalParticipante(id = null) {
+            document.getElementById('part-id').value = "";
+            document.getElementById('part-nome').value = "";
+            document.getElementById('part-funcao').value = "";
+            document.getElementById('part-presencas').value = "";
+            document.getElementById('modal-title').textContent = "Novo Participante";
+            
+            document.getElementById('modal-participante').classList.remove('hidden');
+        }
+
+        function editParticipante(id) {
+            const p = state.participantes.find(item => item.id === id);
+            if (!p) return;
+
+            document.getElementById('part-id').value = p.id;
+            document.getElementById('part-nome').value = p.nome;
+            document.getElementById('part-funcao').value = p.funcao;
+            document.getElementById('part-presencas').value = p.presencas;
+            document.getElementById('part-turma').value = p.turma_id;
+            
+            document.getElementById('modal-title').textContent = "Editar Participante";
+            document.getElementById('modal-participante').classList.remove('hidden');
+        }
+
+        // Navegação de Abas
         function navigateTo(id) {
             document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
             document.getElementById(`view-${id}`).classList.add('active');
-            document.getElementById('page-title').textContent = id.charAt(0).toUpperCase() + id.slice(1);
+            
+            // Títulos das Páginas
+            const titulos = {
+                'dashboard': 'Dashboard',
+                'participantes': 'Gerenciar Participantes',
+                'turmas': 'Gerenciar Turmas'
+            };
+            document.getElementById('page-title').textContent = titulos[id] || 'SysPessoas';
+
+            // Estilizar Botões da Sidebar
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-darkborder font-medium transition-all";
+            });
+            const activeBtn = document.getElementById(`nav-${id}`);
+            if (activeBtn) {
+                activeBtn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold transition-all";
+            }
+
+            // Fechar sidebar no celular após selecionar uma aba
+            if (window.innerWidth < 768) {
+                toggleSidebar();
+            }
+
+            // Redesenhar gráficos ao abrir a aba dashboard para redimensionamento adequado
+            if (id === 'dashboard') {
+                setTimeout(renderCharts, 100);
+            }
         }
 
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function openModalParticipante(id = null) { document.getElementById('modal-participante').classList.remove('hidden'); }
-        
-        document.addEventListener('DOMContentLoaded', init);
+        // Toggle Sidebar para Mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Toggle Dark Mode
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                icon.className = "ph ph-moon text-xl";
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                icon.className = "ph ph-sun text-xl";
+                localStorage.setItem('theme', 'dark');
+            }
+            // Recarrega as cores do gráfico
+            renderCharts();
+        }
+
+        // Recupera Tema Salvo do Usuário
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const icon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'dark') {
+                document.documentElement.className = 'dark';
+                if (icon) icon.className = "ph ph-sun text-xl";
+            } else {
+                document.documentElement.className = 'light';
+                if (icon) icon.className = "ph ph-moon text-xl";
+            }
+        }
+
+        // --- INICIALIZAÇÃO GERAL ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSavedTheme();
+            detectDatabaseMode();
+        });
     </script>
 </body>
 </html>
