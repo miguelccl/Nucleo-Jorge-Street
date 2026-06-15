@@ -51,22 +51,22 @@
         <span id="toast-msg" class="font-medium">Mensagem</span>
     </div>
 
-    <!-- Modal de Confirmação customizado (Substitui o alert/confirm do browser) -->
-    <div id="modal-confirm" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <!-- Modal de Confirmação customizado -->
+    <div id="modal-confirm" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
         <div class="bg-white dark:bg-darkcard w-full max-w-sm rounded-2xl p-6 shadow-xl transform scale-95 transition-transform duration-300">
-            <h3 class="text-lg font-bold mb-2" id="confirm-title">Confirmar Ação</h3>
+            <h3 class="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100" id="confirm-title">Confirmar Ação</h3>
             <p class="text-gray-500 dark:text-gray-400 text-sm mb-6" id="confirm-msg">Você tem certeza que deseja realizar esta ação?</p>
             <div class="flex justify-end gap-3">
-                <button onclick="closeConfirmModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-darkborder dark:hover:bg-neutral-700 rounded-xl font-medium transition-colors">Cancelar</button>
+                <button onclick="closeConfirmModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-darkborder dark:hover:bg-neutral-700 text-gray-700 dark:text-gray-200 rounded-xl font-medium transition-colors">Cancelar</button>
                 <button onclick="closeConfirmModal(true)" id="btn-confirm-action" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors">Confirmar</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Participante -->
-    <div id="modal-participante" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 transition-all duration-300">
+    <div id="modal-participante" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
         <div class="bg-white dark:bg-darkcard w-full max-w-md rounded-2xl shadow-xl p-6 relative">
-            <button onclick="closeModal('modal-participante')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <button onclick="closeModal('modal-participante')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                 <i class="ph ph-x text-xl"></i>
             </button>
             <h2 id="modal-title" class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Novo Participante</h2>
@@ -74,23 +74,23 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Nome Completo</label>
-                    <input type="text" id="part-nome" placeholder="Nome do participante" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
+                    <input type="text" id="part-nome" placeholder="Ex: João da Silva" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100 transition-all">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Função / Tipo</label>
-                    <input type="text" id="part-funcao" placeholder="Ex: Aluno, Visitante, Monitor" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
+                    <input type="text" id="part-funcao" placeholder="Ex: Aluno, Visitante, Monitor" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100 transition-all">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Número de Presenças</label>
-                    <input type="number" id="part-presencas" min="0" placeholder="Quantidade de presenças" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
+                    <input type="number" id="part-presencas" min="0" placeholder="Quantidade de presenças" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100 transition-all">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Turma</label>
-                    <select id="part-turma" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100">
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Turma Vinculada</label>
+                    <select id="part-turma" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 dark:text-gray-100 transition-all">
                         <!-- Preenchido dinamicamente -->
                     </select>
                 </div>
-                <button onclick="saveParticipante()" class="w-full bg-primary hover:bg-primary-hover text-white p-3 rounded-xl font-bold transition-colors shadow-md shadow-primary/20">Salvar Participante</button>
+                <button onclick="saveParticipante()" class="w-full bg-primary hover:bg-primary-hover text-white p-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg shadow-primary/20">Salvar Participante</button>
             </div>
         </div>
     </div>
@@ -101,15 +101,18 @@
             <div class="flex items-center gap-2 text-primary font-bold text-xl">
                 <i class="ph-fill ph-users-three text-3xl"></i> SysPessoas
             </div>
-            <button class="md:hidden text-gray-500 text-2xl hover:text-gray-700 dark:hover:text-gray-300" onclick="toggleSidebar()">
+            <button class="md:hidden text-gray-500 text-2xl hover:text-gray-700 dark:hover:text-gray-300 transition-colors" onclick="toggleSidebar()">
                 <i class="ph ph-x"></i>
             </button>
         </div>
         
         <!-- Status de Conexão -->
-        <div class="px-4 py-2 bg-gray-50 dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-darkborder flex items-center gap-2 text-xs">
-            <span id="conn-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <span id="conn-status" class="text-gray-500 dark:text-gray-400 font-medium">Conectando Nuvem...</span>
+        <div class="px-4 py-2 bg-gray-50 dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-darkborder flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <span id="conn-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span id="conn-status" class="text-gray-500 dark:text-gray-400 font-medium">Conectando Nuvem...</span>
+            </div>
+            <i class="ph ph-cloud-check text-gray-400"></i>
         </div>
         
         <nav class="flex-1 p-3 space-y-2 overflow-y-auto">
@@ -125,19 +128,19 @@
         </nav>
 
         <div class="p-4 border-t border-gray-100 dark:border-darkborder text-xs text-center text-gray-400" id="user-display">
-            Sincronizando...
+            Sincronizando Sessão...
         </div>
     </aside>
 
     <!-- Overlay de fundo escuro para mobile -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden" onclick="toggleSidebar()"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 hidden" onclick="toggleSidebar()"></div>
 
     <!-- Conteúdo Principal -->
     <main class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
         <!-- Header -->
         <header class="bg-white dark:bg-darkcard border-b border-gray-200 dark:border-darkborder h-16 flex items-center px-4 justify-between shrink-0">
             <div class="flex items-center gap-3">
-                <button class="md:hidden p-2 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-darkborder" onclick="toggleSidebar()">
+                <button class="md:hidden p-2 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-darkborder transition-colors" onclick="toggleSidebar()">
                     <i class="ph ph-list text-2xl"></i>
                 </button>
                 <h1 id="page-title" class="font-bold text-xl">Dashboard</h1>
@@ -167,7 +170,7 @@
                         </div>
                         <div>
                             <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Participantes</h3>
-                            <p class="text-3xl font-bold mt-0.5" id="stat-total">0</p>
+                            <p class="text-3xl font-bold mt-0.5 text-gray-800 dark:text-gray-100" id="stat-total">0</p>
                         </div>
                     </div>
                     
@@ -177,7 +180,7 @@
                         </div>
                         <div>
                             <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total de Presenças</h3>
-                            <p class="text-3xl font-bold mt-0.5" id="stat-presencas">0</p>
+                            <p class="text-3xl font-bold mt-0.5 text-gray-800 dark:text-gray-100" id="stat-presencas">0</p>
                         </div>
                     </div>
 
@@ -186,8 +189,8 @@
                             <i class="ph-fill ph-books text-3xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Total de Turmas</h3>
-                            <p class="text-3xl font-bold mt-0.5" id="stat-turmas">0</p>
+                            <h3 class="text-sm text-gray-500 dark:text-gray-400 font-medium">Turmas Ativas</h3>
+                            <p class="text-3xl font-bold mt-0.5 text-gray-800 dark:text-gray-100" id="stat-turmas">0</p>
                         </div>
                     </div>
                 </div>
@@ -222,14 +225,14 @@
                 <div class="mb-6 flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
                     <div class="relative flex-1 max-w-md">
                         <i class="ph ph-magnifying-glass absolute left-3.5 top-3.5 text-gray-400 text-lg"></i>
-                        <input type="text" id="input-busca" oninput="filtrarParticipantes()" placeholder="Buscar por participante ou função..." class="w-full pl-11 pr-4 py-3 bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow">
+                        <input type="text" id="input-busca" oninput="filtrarParticipantes()" placeholder="Buscar por nome ou função..." class="w-full pl-11 pr-4 py-3 bg-white dark:bg-darkcard border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow">
                     </div>
                     
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="exportarPlanilha()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors" title="Exportar dados para Excel (.xlsx)">
+                        <button onclick="exportarPlanilha()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm" title="Exportar dados para Excel (.xlsx)">
                             <i class="ph ph-file-xls text-xl"></i> Planilha
                         </button>
-                        <button onclick="exportarTexto()" class="flex-1 sm:flex-none bg-zinc-600 hover:bg-zinc-700 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors" title="Exportar dados para arquivo de texto (.txt)">
+                        <button onclick="exportarTexto()" class="flex-1 sm:flex-none bg-zinc-600 hover:bg-zinc-700 text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm" title="Exportar dados para arquivo de texto (.txt)">
                             <i class="ph ph-file-text text-xl"></i> Texto
                         </button>
                     </div>
@@ -241,9 +244,10 @@
                 </div>
                 
                 <!-- Feedback de Nenhum Participante Encontrado -->
-                <div id="no-participants" class="hidden text-center py-12 text-gray-400">
-                    <i class="ph ph-user-focus text-6xl mb-2"></i>
-                    <p class="text-lg">Nenhum participante encontrado.</p>
+                <div id="no-participants" class="hidden flex flex-col items-center justify-center py-16 text-gray-400">
+                    <i class="ph ph-users-slash text-6xl mb-3 text-gray-300 dark:text-gray-600"></i>
+                    <p class="text-lg font-medium text-gray-500 dark:text-gray-400">Nenhum participante encontrado.</p>
+                    <p class="text-sm mt-1">Adicione novos participantes clicando no botão acima.</p>
                 </div>
             </section>
 
@@ -255,9 +259,9 @@
                         <i class="ph ph-folder-plus text-xl text-primary"></i> Adicionar Nova Turma
                     </h3>
                     <div class="flex flex-col md:flex-row gap-3">
-                        <input type="text" id="quick-turma-curso" placeholder="Nome do Curso (Ex: Informática, Administração)" class="flex-1 p-3 bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <input type="text" id="quick-turma-curso" placeholder="Nome do Curso (Ex: Informática, Administração)" class="flex-1 p-3 bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
                         
-                        <select id="quick-turma-ano" class="md:w-48 p-3 bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <select id="quick-turma-ano" class="md:w-48 p-3 bg-gray-50 dark:bg-[#2a2a2a] border border-gray-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
                             <option value="1">1º Ano</option>
                             <option value="2">2º Ano</option>
                             <option value="3">3º Ano</option>
@@ -280,26 +284,22 @@
 
     <!-- Script de Inicialização da Conexão em Nuvem e Lógica do App -->
     <script type="module">
-        // Importações da biblioteca Firestore do Firebase oficial na versão v11
+        // Importações da biblioteca Firebase oficial (v11)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, collection, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuração injetada do ambiente ou fallback seguro
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "",
-                authDomain: "syspessoas-demo.firebaseapp.com",
-                projectId: "syspessoas-demo",
-                storageBucket: "syspessoas-demo.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:abcdef"
-            };
+        // SUAS CREDENCIAIS OFICIAIS DO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgWF3wGcnKV0HcRP_zD2ovNq099TD_vd0",
+            authDomain: "nucleo-8f820.firebaseapp.com",
+            projectId: "nucleo-8f820",
+            storageBucket: "nucleo-8f820.firebasestorage.app",
+            messagingSenderId: "506798510177",
+            appId: "1:506798510177:web:ec2146967281fb8ae6da20"
+        };
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'syspessoas-global-app';
-
-        // Estado do app sincronizado em tempo real
+        // Estado local da aplicação, sincronizado reativamente
         let state = {
             participantes: [],
             turmas: []
@@ -309,108 +309,113 @@
         let auth = null;
         let currentUser = null;
 
-        // Referências das coleções usando caminhos estritos obrigatórios para multi-dispositivo global
-        const getTurmasCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'turmas');
-        const getParticipantesCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'participantes');
+        // Path rules adaptados para o seu banco
+        const getTurmasCol = () => collection(db, 'artifacts', 'nucleo-8f820', 'public', 'data', 'turmas');
+        const getParticipantesCol = () => collection(db, 'artifacts', 'nucleo-8f820', 'public', 'data', 'participantes');
 
-        // Inicialização do Banco de Dados em Nuvem (Regra 3 - Autenticar antes de ler/gravar)
-        async function initSyncEngine() {
+        // Inicialização Principal
+        async function initApp() {
             const connIndicator = document.getElementById('conn-indicator');
             const connStatus = document.getElementById('conn-status');
             const userDisplay = document.getElementById('user-display');
 
             try {
+                // Inicia o Firebase com a SUA configuração
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // Autenticação prévia obrigatória
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
+                // Tenta fazer login anônimo
+                try {
                     await signInAnonymously(auth);
+                } catch (authErr) {
+                    console.warn("Autenticação anônima desativada ou indisponível:", authErr);
+                    
+                    if (authErr.code === 'auth/configuration-not-found') {
+                        // Mensagem clara sobre o que ativar no painel do Firebase
+                        showToast("Ative o login 'Anônimo' em: Authentication > Sign-in Method no Firebase!", "error");
+                        connStatus.textContent = "Erro: Ativar Provedor Anônimo";
+                        connIndicator.className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse";
+                    } else {
+                        showToast("Aviso: " + authErr.message, "error");
+                        connStatus.textContent = "Erro de Autenticação";
+                        connIndicator.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+                    }
+
+                    // Força um login simbólico no front-end para tentar continuar se as regras de segurança permitirem
+                    currentUser = { uid: "unauthenticated-session" };
+                    userDisplay.innerHTML = `<span class="block overflow-hidden text-ellipsis text-xs text-red-500 font-semibold">Sem Autenticação</span>`;
+                    
+                    // Inicializa os escutadores reativos mesmo com erro de autenticação (regras livres)
+                    startRealtimeSync();
+                    return;
                 }
 
+                // Escuta o estado da autenticação quando bem sucedida
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         currentUser = user;
                         connIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
-                        connStatus.textContent = "Nuvem Sincronizada";
-                        userDisplay.innerHTML = `<span class="block overflow-hidden text-ellipsis whitespace-nowrap">ID: ${user.uid}</span>`;
+                        connStatus.textContent = "Online / Nuvem Sincronizada";
+                        userDisplay.innerHTML = `<span class="block overflow-hidden text-ellipsis whitespace-nowrap text-emerald-600 dark:text-emerald-500 font-medium">Sessão Ativa: ${user.uid.substring(0,6)}...</span>`;
                         
-                        // Sincronizar em tempo real as coleções compartilhadas globalmente
+                        // Começa a ouvir o banco de dados em tempo real
                         startRealtimeSync();
-                    } else {
-                        connIndicator.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
-                        connStatus.textContent = "Sem autenticação";
                     }
                 });
 
             } catch (err) {
                 console.error("Falha ao inicializar o banco de dados:", err);
                 connIndicator.className = "w-2.5 h-2.5 rounded-full bg-red-500";
-                connStatus.textContent = "Modo Demonstração";
-                userDisplay.textContent = "Erro de sincronização";
-                
-                // Dados iniciais de demonstração em caso de erro de inicialização local
-                state.turmas = [
-                    { id: "t1", nome: "INFORMÁTICA - 1º ANO" },
-                    { id: "t2", nome: "ADMINISTRAÇÃO - 2º ANO" }
-                ];
-                state.participantes = [
-                    { id: "p1", nome: "Visitante Demo", funcao: "Aluno", presencas: 5, turma_id: "t1" }
-                ];
-                render();
+                connStatus.textContent = "Erro de Conexão";
+                showToast("Não foi possível conectar ao banco de dados.", "error");
             }
         }
 
-        // Sincronização em tempo real multi-dispositivo de forma reativa (Regra 2 - Sem buscas complexas)
+        // Sincronização em tempo real (Firestore Listeners)
         function startRealtimeSync() {
-            if (!currentUser) return;
-
-            // Escuta modificações de qualquer dispositivo na coleção de Turmas
+            // Ouvindo Turmas
             onSnapshot(getTurmasCol(), (snap) => {
                 state.turmas = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Ordem alfabética
+                state.turmas.sort((a, b) => a.nome.localeCompare(b.nome));
                 render();
             }, (err) => {
-                console.error("Erro na sincronização de turmas:", err);
-                showToast("Erro de leitura das turmas.", "error");
+                console.error("Erro ao sincronizar turmas:", err);
+                showToast("Erro ao sincronizar turmas.", "error");
             });
 
-            // Escuta modificações de qualquer dispositivo na coleção de Participantes
+            // Ouvindo Participantes
             onSnapshot(getParticipantesCol(), (snap) => {
                 state.participantes = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                render();
+                // Ordem alfabética
+                state.participantes.sort((a, b) => a.nome.localeCompare(b.nome));
+                
+                // Se houver busca ativa, manter filtro, se não, renderizar tudo
+                const searchVal = document.getElementById('input-busca').value.trim();
+                if (searchVal) {
+                    filtrarParticipantes();
+                } else {
+                    render();
+                }
             }, (err) => {
-                console.error("Erro na sincronização de participantes:", err);
-                showToast("Erro de leitura dos participantes.", "error");
+                console.error("Erro ao sincronizar participantes:", err);
+                showToast("Erro ao sincronizar participantes.", "error");
             });
         }
 
-        // --- SISTEMA DE OPERAÇÕES DE ESCRITA E EDICÃO (CRUD) ---
+        // --- FUNÇÕES DE BANCO DE DADOS (CRUD) ---
 
         // Salvar ou Atualizar Participante
         async function saveParticipante() {
-            if (!currentUser) {
-                showToast("Aguarde a autenticação do dispositivo...", "error");
-                return;
-            }
-
             const id = document.getElementById('part-id').value;
             const nomeInput = document.getElementById('part-nome').value.trim();
             const funcaoInput = document.getElementById('part-funcao').value.trim() || 'Participante';
             const presencasInput = parseInt(document.getElementById('part-presencas').value) || 0;
             const turmaSelect = document.getElementById('part-turma').value;
 
-            if (!nomeInput) {
-                showToast("O nome do participante é obrigatório!", "error");
-                return;
-            }
-
-            if (!turmaSelect) {
-                showToast("Por favor, selecione uma turma!", "error");
-                return;
-            }
+            if (!nomeInput) return showToast("O nome do participante é obrigatório!", "error");
+            if (!turmaSelect) return showToast("Por favor, selecione uma turma!", "error");
 
             const data = {
                 nome: nomeInput,
@@ -421,100 +426,93 @@
 
             try {
                 if (id) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'participantes', id);
+                    const docRef = doc(db, 'artifacts', 'nucleo-8f820', 'public', 'data', 'participantes', id);
                     await updateDoc(docRef, data);
-                    showToast("Participante atualizado em todos os dispositivos!");
+                    showToast("Participante atualizado com sucesso!");
                 } else {
                     await addDoc(getParticipantesCol(), data);
-                    showToast("Participante adicionado com sucesso!");
+                    showToast("Novo participante cadastrado!");
                 }
                 closeModal('modal-participante');
             } catch (err) {
-                console.error("Erro de escrita:", err);
-                showToast("Erro ao gravar dados na nuvem.", "error");
+                console.error(err);
+                showToast("Erro ao salvar participante. Verifique as regras do Firebase.", "error");
             }
         }
 
-        // Deletar Participante
+        // Variáveis de controle para o Modal de Exclusão
         let deleteTargetId = null;
-        let deleteTargetType = ''; // 'participante' ou 'turma'
+        let deleteTargetType = ''; 
 
+        // Acionar confirmação de exclusão do participante
         function promptDeleteParticipante(id) {
             deleteTargetId = id;
             deleteTargetType = 'participante';
             const p = state.participantes.find(item => item.id === id);
-            openConfirmModal("Excluir Participante", `Tem certeza que deseja excluir "${p?.nome || 'este participante'}" de todos os dispositivos?`);
+            openConfirmModal("Excluir Participante", `Tem certeza que deseja excluir "${p?.nome || 'este participante'}"? Os dados serão apagados permanentemente.`);
         }
 
+        // Executar a exclusão de fato no Firebase
         async function executeDeleteParticipante(id) {
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'participantes', id);
+                const docRef = doc(db, 'artifacts', 'nucleo-8f820', 'public', 'data', 'participantes', id);
                 await deleteDoc(docRef);
-                showToast("Participante excluído com sucesso!");
+                showToast("Participante removido.");
             } catch (err) {
                 showToast("Erro ao excluir participante.", "error");
             }
         }
 
-        // Salvar Nova Turma
+        // Salvar Nova Turma Rápido
         async function quickSaveTurma() {
-            if (!currentUser) {
-                showToast("Aguarde a autenticação...", "error");
-                return;
-            }
-
             const curso = document.getElementById('quick-turma-curso').value.trim().toUpperCase();
             const ano = document.getElementById('quick-turma-ano').value;
             
-            if (!curso) {
-                showToast("Digite o nome do curso!", "error");
-                return;
-            }
+            if (!curso) return showToast("Digite o nome do curso!", "error");
 
             const nomeTurma = ano === "Outro" ? curso : `${curso} - ${ano}º ANO`;
 
-            // Validação de Duplicados local antes do upload
-            const existe = state.turmas.some(t => t.nome.toUpperCase() === nomeTurma.toUpperCase());
-            if (existe) {
-                showToast("Essa turma já existe!", "error");
-                return;
+            // Verifica se a turma já existe localmente para evitar spam no firebase
+            if (state.turmas.some(t => t.nome.toUpperCase() === nomeTurma.toUpperCase())) {
+                return showToast("Essa turma já existe no sistema!", "error");
             }
 
             try {
                 await addDoc(getTurmasCol(), { nome: nomeTurma });
-                showToast("Turma adicionada com sucesso!");
+                showToast("Nova turma cadastrada!");
                 document.getElementById('quick-turma-curso').value = '';
             } catch (err) {
-                showToast("Erro ao adicionar turma na nuvem.", "error");
+                showToast("Erro ao cadastrar a turma.", "error");
             }
         }
 
-        // Deletar Turma
+        // Acionar confirmação de exclusão da turma
         function promptDeleteTurma(id) {
             deleteTargetId = id;
             deleteTargetType = 'turma';
             const t = state.turmas.find(item => item.id === id);
             const vinculados = state.participantes.filter(p => p.turma_id === id).length;
             
-            let aviso = `Excluir turma "${t?.nome}"?`;
+            let aviso = `Deseja excluir a turma "${t?.nome}" permanentemente?`;
             if (vinculados > 0) {
-                aviso += ` Existem ${vinculados} participantes vinculados a ela que ficarão sem turma.`;
+                aviso += ` Existem ${vinculados} participantes vinculados a ela! Eles ficarão "Sem Turma".`;
             }
 
             openConfirmModal("Excluir Turma", aviso);
         }
 
+        // Executar exclusão da Turma
         async function executeDeleteTurma(id) {
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'turmas', id);
+                const docRef = doc(db, 'artifacts', 'nucleo-8f820', 'public', 'data', 'turmas', id);
                 await deleteDoc(docRef);
-                showToast("Turma excluída com sucesso!");
+                showToast("Turma removida com sucesso.");
             } catch (err) {
-                showToast("Erro ao excluir turma.", "error");
+                showToast("Erro ao excluir a turma.", "error");
             }
         }
 
-        // Modificador rápido de presenças (+ / -)
+        // Adicionar / Remover Presenças Rapidamente (+ ou -)
         async function updatePresencaRapida(id, alteracao) {
             const p = state.participantes.find(item => item.id === id);
             if (!p) return;
@@ -522,70 +520,69 @@
             const novaPresenca = Math.max(0, p.presencas + alteracao);
 
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'participantes', id);
+                const docRef = doc(db, 'artifacts', 'nucleo-8f820', 'public', 'data', 'participantes', id);
                 await updateDoc(docRef, { presencas: novaPresenca });
             } catch (e) {
                 showToast("Erro ao computar presença.", "error");
             }
         }
 
-        // --- SISTEMA DE RENDERIZAÇÃO & GRÁFICOS ---
+        // --- SISTEMA DE RENDERIZAÇÃO NA TELA ---
         let chartTurmas = null;
         let chartPresencas = null;
 
         function render() {
-            // 1. Estatísticas Rápidas
-            const totalParticipantes = state.participantes.length;
-            const totalPresencas = state.participantes.reduce((acc, p) => acc + (p.presencas || 0), 0);
-            
-            document.getElementById('stat-total').textContent = totalParticipantes;
-            document.getElementById('stat-presencas').textContent = totalPresencas;
+            // Atualizar Estatísticas Superiores
+            document.getElementById('stat-total').textContent = state.participantes.length;
+            document.getElementById('stat-presencas').textContent = state.participantes.reduce((acc, p) => acc + (p.presencas || 0), 0);
             document.getElementById('stat-turmas').textContent = state.turmas.length;
 
-            // 2. Select do modal de participante
+            // Popular o Select do Formulário (Modal de Participante)
             const selectPartTurma = document.getElementById('part-turma');
-            selectPartTurma.innerHTML = state.turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
             if (state.turmas.length === 0) {
-                selectPartTurma.innerHTML = `<option value="">Nenhuma Turma Cadastrada</option>`;
+                selectPartTurma.innerHTML = `<option value="">Por favor, cadastre uma turma antes</option>`;
+            } else {
+                selectPartTurma.innerHTML = state.turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
             }
 
-            // 3. Grid de Participantes
+            // Renderizar Abas Principais
             renderParticipantes(state.participantes);
+            renderTurmas(state.turmas);
+            renderCharts();
+        }
 
-            // 4. Grid de Turmas
+        function renderTurmas(lista) {
             const gridTurmas = document.getElementById('grid-turmas');
-            gridTurmas.innerHTML = state.turmas.map(t => {
+            if (lista.length === 0) {
+                gridTurmas.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-12 text-gray-400">
+                        <i class="ph ph-folder-open text-6xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                        <p class="text-lg">Nenhuma turma criada até o momento.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            gridTurmas.innerHTML = lista.map(t => {
                 const totalMembros = state.participantes.filter(p => p.turma_id === t.id).length;
                 return `
-                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col justify-between">
+                    <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                         <div>
                             <div class="flex items-center justify-between">
                                 <span class="bg-primary/10 text-primary dark:bg-primary/20 text-xs font-bold px-2.5 py-1 rounded-lg">TURMA</span>
-                                <button onclick="promptDeleteTurma('${t.id}')" class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                <button onclick="promptDeleteTurma('${t.id}')" class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Apagar Turma">
                                     <i class="ph ph-trash text-lg"></i>
                                 </button>
                             </div>
                             <h4 class="font-bold text-gray-800 dark:text-gray-100 mt-3 text-lg leading-snug">${t.nome}</h4>
                         </div>
                         <div class="mt-4 pt-4 border-t border-gray-100 dark:border-[#2d2d2d] flex items-center justify-between text-sm text-gray-500">
-                            <span>Integrantes Cadastrados:</span>
-                            <span class="font-bold text-gray-800 dark:text-gray-200">${totalMembros}</span>
+                            <span>Integrantes:</span>
+                            <span class="font-bold text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-[#2d2d2d] px-2 py-0.5 rounded-md">${totalMembros}</span>
                         </div>
                     </div>
                 `;
             }).join('');
-            
-            if (state.turmas.length === 0) {
-                gridTurmas.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-gray-400">
-                        <i class="ph ph-folder-open text-6xl mb-2"></i>
-                        <p class="text-lg">Nenhuma turma criada até o momento.</p>
-                    </div>
-                `;
-            }
-
-            // 5. Atualizar Gráficos do Dashboard
-            renderCharts();
         }
 
         function renderParticipantes(lista) {
@@ -600,7 +597,7 @@
             noParticipants.classList.add('hidden');
 
             container.innerHTML = lista.map(p => {
-                const turma = state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma';
+                const turma = state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma (Turma Excluída)';
                 return `
                     <div class="bg-white dark:bg-darkcard p-5 rounded-2xl border border-gray-100 dark:border-darkborder shadow-sm flex flex-col justify-between hover:shadow-md transition-all">
                         <div>
@@ -610,10 +607,10 @@
                                     <span class="inline-block mt-1 text-xs bg-gray-100 dark:bg-darkborder text-gray-500 dark:text-gray-400 font-semibold px-2 py-0.5 rounded">${p.funcao}</span>
                                 </div>
                                 <div class="flex gap-1">
-                                    <button onclick="editParticipante('${p.id}')" class="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 p-2 rounded-xl transition-colors" title="Editar">
+                                    <button onclick="editParticipante('${p.id}')" class="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 p-2 rounded-xl transition-colors" title="Editar Informações">
                                         <i class="ph ph-pencil-simple text-lg"></i>
                                     </button>
-                                    <button onclick="promptDeleteParticipante('${p.id}')" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 p-2 rounded-xl transition-colors" title="Deletar">
+                                    <button onclick="promptDeleteParticipante('${p.id}')" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 p-2 rounded-xl transition-colors" title="Remover">
                                         <i class="ph ph-trash text-lg"></i>
                                     </button>
                                 </div>
@@ -625,11 +622,11 @@
                         </div>
 
                         <div class="mt-5 pt-4 border-t border-gray-100 dark:border-[#2d2d2d] flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-400">Presenças:</span>
+                            <span class="text-sm font-medium text-gray-400">Presenças Acumuladas:</span>
                             <div class="flex items-center gap-2">
-                                <button onclick="updatePresencaRapida('${p.id}', -1)" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-darkborder hover:bg-gray-200 dark:hover:bg-neutral-700 flex items-center justify-center font-bold text-lg text-gray-600 dark:text-gray-200 transition-colors">-</button>
+                                <button onclick="updatePresencaRapida('${p.id}', -1)" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-darkborder hover:bg-gray-200 dark:hover:bg-neutral-700 flex items-center justify-center font-bold text-lg text-gray-600 dark:text-gray-200 transition-colors shadow-sm">-</button>
                                 <span class="font-bold text-gray-800 dark:text-gray-100 px-1 text-base min-w-[20px] text-center">${p.presencas}</span>
-                                <button onclick="updatePresencaRapida('${p.id}', 1)" class="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 flex items-center justify-center font-bold text-lg text-primary transition-colors">+</button>
+                                <button onclick="updatePresencaRapida('${p.id}', 1)" class="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 flex items-center justify-center font-bold text-lg text-primary transition-colors shadow-sm">+</button>
                             </div>
                         </div>
                     </div>
@@ -637,29 +634,32 @@
             }).join('');
         }
 
+        // Gráficos do Dashboard com Chart.js
         function renderCharts() {
             const isDark = document.documentElement.classList.contains('dark');
             const textColor = isDark ? '#9ca3af' : '#4b5563';
             const gridColor = isDark ? '#2d2d2d' : '#f1f5f9';
 
-            // Dados das Turmas para Porcentagem
+            // Dados (Porcentagens e Presenças)
             const total = state.participantes.length;
             const labelsTurma = state.turmas.map(t => t.nome);
+            
             const dadosPorcentagem = state.turmas.map(t => {
                 const qtd = state.participantes.filter(p => p.turma_id === t.id).length;
                 return total > 0 ? parseFloat(((qtd / total) * 100).toFixed(1)) : 0;
             });
 
-            // Dados das Presenças
             const dadosPresencas = state.turmas.map(t => {
                 return state.participantes
                     .filter(p => p.turma_id === t.id)
                     .reduce((acc, p) => acc + (p.presencas || 0), 0);
             });
 
+            // Evitar vazamento de memória destruindo gráficos antigos antes de repintar
             if (chartTurmas) chartTurmas.destroy();
             if (chartPresencas) chartPresencas.destroy();
 
+            // GRÁFICO 1 - Rosquinha
             const ctxDonut = document.getElementById('chart-turmas-percentage').getContext('2d');
             chartTurmas = new Chart(ctxDonut, {
                 type: 'doughnut',
@@ -676,25 +676,24 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: textColor, font: { family: 'Inter', size: 11 } }
-                        }
+                        legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Inter', size: 11 } } },
+                        tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.raw}%` } }
                     }
                 }
             });
 
+            // GRÁFICO 2 - Barras
             const ctxBar = document.getElementById('chart-presencas-bar').getContext('2d');
             chartPresencas = new Chart(ctxBar, {
                 type: 'bar',
                 data: {
                     labels: labelsTurma.length > 0 ? labelsTurma : ["Sem dados"],
                     datasets: [{
-                        label: 'Total de Presenças',
+                        label: 'Total de Presenças na Turma',
                         data: dadosPresencas.length > 0 ? dadosPresencas : [0],
                         backgroundColor: 'rgba(59, 130, 246, 0.85)',
                         hoverBackgroundColor: '#3b82f6',
-                        borderRadius: 8,
+                        borderRadius: 6,
                         borderWidth: 0
                     }]
                 },
@@ -702,49 +701,38 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: textColor, font: { family: 'Inter', size: 10 } }
-                        },
-                        y: {
-                            grid: { color: gridColor },
-                            ticks: { color: textColor, precision: 0 }
-                        }
+                        x: { grid: { display: false }, ticks: { color: textColor, font: { family: 'Inter', size: 10 } } },
+                        y: { grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }
                     },
                     plugins: { legend: { display: false } }
                 }
             });
         }
 
-        // --- EXPORTADORES ---
+        // --- SISTEMAS DE EXPORTAÇÃO ---
         function exportarPlanilha() {
-            if (state.participantes.length === 0) {
-                showToast("Não há dados para exportar!", "error");
-                return;
-            }
+            if (state.participantes.length === 0) return showToast("Não há dados para gerar planilha!", "error");
 
             const data = state.participantes.map(p => ({
-                Nome: p.nome,
-                Função: p.funcao,
-                Presenças: p.presencas,
-                Turma: state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma'
+                'Nome Completo': p.nome,
+                'Função': p.funcao,
+                'Total de Presenças': p.presencas,
+                'Turma Vinculada': state.turmas.find(t => t.id === p.turma_id)?.nome || 'Sem Turma'
             }));
 
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Participantes");
-            XLSX.writeFile(wb, "lista_syspessoas.xlsx");
-            showToast("Planilha exportada com sucesso!");
+            XLSX.writeFile(wb, "Base_Participantes_SysPessoas.xlsx");
+            showToast("Planilha Excel (.xlsx) baixada com sucesso!");
         }
 
         function exportarTexto() {
-            if (state.participantes.length === 0) {
-                showToast("Não há dados para exportar!", "error");
-                return;
-            }
+            if (state.participantes.length === 0) return showToast("Não há dados para o relatório!", "error");
 
             let txt = "=========================================\n";
-            txt += "    SISTEMA SYSPESSOAS - RELATÓRIO\n";
+            txt += "    RELATÓRIO GERAL - SYSPESSOAS\n";
+            txt += `    Data de emissão: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}\n`;
             txt += "=========================================\n\n";
 
             state.turmas.forEach(t => {
@@ -752,10 +740,10 @@
                 txt += "-----------------------------------------\n";
                 const filtrados = state.participantes.filter(p => p.turma_id === t.id);
                 if (filtrados.length === 0) {
-                    txt += " (Sem integrantes)\n";
+                    txt += " (Nenhum participante matriculado)\n";
                 } else {
                     filtrados.forEach((p, idx) => {
-                        txt += ` ${idx + 1}. ${p.nome.padEnd(25, ' ')} | Função: ${p.funcao.padEnd(15, ' ')} | Presenças: ${p.presencas}\n`;
+                        txt += ` ${String(idx + 1).padStart(2, '0')}. Nome: ${p.nome.padEnd(25, ' ')} | Função: ${p.funcao.padEnd(15, ' ')} | Presenças: ${p.presencas}\n`;
                     });
                 }
                 txt += "\n";
@@ -764,21 +752,24 @@
             const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "relatorio_presenca.txt";
+            link.download = "Relatorio_Presencas_SysPessoas.txt";
             link.click();
-            showToast("Relatório baixado com sucesso!");
+            showToast("Relatório de Texto (.txt) baixado com sucesso!");
         }
 
-        // --- SISTEMA DE FILTRO EM TEMPO REAL ---
+        // --- SISTEMA DE PESQUISA (FILTRO) ---
         function filtrarParticipantes() {
             const query = document.getElementById('input-busca').value.toLowerCase().trim();
-            const filtrados = state.participantes.filter(p => {
-                return p.nome.toLowerCase().includes(query) || p.funcao.toLowerCase().includes(query);
-            });
+            if (!query) {
+                renderParticipantes(state.participantes);
+                return;
+            }
+            const filtrados = state.participantes.filter(p => p.nome.toLowerCase().includes(query) || p.funcao.toLowerCase().includes(query));
             renderParticipantes(filtrados);
         }
 
-        // --- CONTROLES DE DESIGN E SIDEBAR ---
+        // --- COMPONENTES DA INTERFACE DO USUÁRIO (UI) ---
+        
         function toggleDarkMode() {
             const html = document.documentElement;
             const icon = document.getElementById('theme-icon');
@@ -794,35 +785,30 @@
                 icon.className = "ph ph-sun text-xl";
                 localStorage.setItem('theme', 'dark');
             }
-            renderCharts();
+            renderCharts(); // Repinta os gráficos para adaptar a cor do texto
         }
 
         function navigateTo(id) {
+            // Esconde todas as views
             document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
+            // Mostra a view clicada
             document.getElementById(`view-${id}`).classList.add('active');
             
-            const titulos = {
-                'dashboard': 'Dashboard',
-                'participantes': 'Gerenciar Participantes',
-                'turmas': 'Gerenciar Turmas'
-            };
+            const titulos = { 'dashboard': 'Painel de Controle', 'participantes': 'Gerenciar Participantes', 'turmas': 'Gerenciar Turmas' };
             document.getElementById('page-title').textContent = titulos[id] || 'SysPessoas';
 
+            // Atualiza o estado visual dos botões no menu
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-darkborder font-medium transition-all";
             });
             const activeBtn = document.getElementById(`nav-${id}`);
-            if (activeBtn) {
-                activeBtn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold transition-all";
-            }
+            if (activeBtn) activeBtn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-semibold transition-all";
 
-            if (window.innerWidth < 768) {
-                toggleSidebar();
-            }
+            // Se for mobile, fecha o menu ao clicar
+            if (window.innerWidth < 768) toggleSidebar();
 
-            if (id === 'dashboard') {
-                setTimeout(renderCharts, 50);
-            }
+            // Gatilho de resize para gráficos do dashboard
+            if (id === 'dashboard') setTimeout(renderCharts, 50);
         }
 
         function toggleSidebar() {
@@ -862,29 +848,22 @@
             document.getElementById('modal-participante').classList.remove('hidden');
         }
 
-        // Modal de Confirmação Customizado
         let confirmPromiseResolver;
         function openConfirmModal(title, message) {
             document.getElementById('confirm-title').textContent = title;
             document.getElementById('confirm-msg').textContent = message;
             document.getElementById('modal-confirm').classList.remove('hidden');
-            return new Promise((resolve) => {
-                confirmPromiseResolver = resolve;
-            });
+            return new Promise((resolve) => confirmPromiseResolver = resolve);
         }
 
         function closeConfirmModal(result) {
             document.getElementById('modal-confirm').classList.add('hidden');
-            if (confirmPromiseResolver) {
-                confirmPromiseResolver(result);
-            }
+            if (confirmPromiseResolver) confirmPromiseResolver(result);
             
+            // Chama a respectiva função de deleção de acordo com a escolha prévia
             if (result && deleteTargetId) {
-                if (deleteTargetType === 'participante') {
-                    executeDeleteParticipante(deleteTargetId);
-                } else if (deleteTargetType === 'turma') {
-                    executeDeleteTurma(deleteTargetId);
-                }
+                if (deleteTargetType === 'participante') executeDeleteParticipante(deleteTargetId);
+                else if (deleteTargetType === 'turma') executeDeleteTurma(deleteTargetId);
             }
             deleteTargetId = null;
             deleteTargetType = '';
@@ -910,12 +889,10 @@
             }
 
             toast.classList.remove('translate-x-full', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-            }, 3000);
+            setTimeout(() => toast.classList.add('translate-x-full', 'opacity-0'), 3000);
         }
 
-        // Vinculando as funções ao escopo global (window) para manter o HTML simplificado
+        // --- EXPOSIÇÃO GLOBAL (Evita erros por conta de módulos ES6 em botões OnClick no HTML) ---
         window.saveParticipante = saveParticipante;
         window.promptDeleteParticipante = promptDeleteParticipante;
         window.quickSaveTurma = quickSaveTurma;
@@ -932,13 +909,13 @@
         window.closeConfirmModal = closeConfirmModal;
         window.closeModal = closeModal;
 
-        // Recuperar tema salvo
+        // Recupera a preferência visual (Modo Claro/Escuro) do dispositivo
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.className = savedTheme;
         document.getElementById('theme-icon').className = savedTheme === 'dark' ? "ph ph-sun text-xl" : "ph ph-moon text-xl";
 
-        // Inicialização
-        initSyncEngine();
+        // Chama a inicialização da Nuvem (Firebase)
+        initApp();
     </script>
 </body>
 </html>
